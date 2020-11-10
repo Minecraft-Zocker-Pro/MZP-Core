@@ -12,6 +12,7 @@ public class Title {
 	private static final String serverVersion = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
 
 	private static void sendPacket(Player player, Object packet) {
+		player.spigot().sendMessage();
 		try {
 			Object handle = player.getClass().getMethod("getHandle").invoke(player);
 			Object playerConnection = handle.getClass().getField("playerConnection").get(handle);
