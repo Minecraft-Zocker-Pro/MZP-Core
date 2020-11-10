@@ -59,6 +59,7 @@ public class Main extends CorePlugin {
 
 	@Override
 	public void registerCommand() {
+		getCommand("core").setExecutor(new CoreCommand());
 	}
 
 	@Override
