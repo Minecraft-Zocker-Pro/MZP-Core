@@ -63,6 +63,10 @@ public class Main extends CorePlugin {
 
 	@Override
 	public void registerListener() {
+		PluginManager pluginManager = Bukkit.getPluginManager();
+		pluginManager.registerEvents(new PlayerJoinListener(), this);
+		pluginManager.registerEvents(new PlayerQuitListener(), this);
+		pluginManager.registerEvents(new InventoryActive.GUIActiveListener(), this);
 	}
 
 	@Override
@@ -114,7 +118,19 @@ public class Main extends CorePlugin {
 
 		Config message = Config.getConfig("message.yml", this.getPluginName());
 		message.reload();
-		
+
+		Zocker.getAllZocker().clear();
+
+		// Reinitialize
+		for (Player player : Bukkit.getOnlinePlayers()) {
+			new Zocker(player.getUniqueId());
+		}
+
+		// Close inventories if possible
+		for (InventoryActive inventoryActive : InventoryActive.getActiveInventorys().values()) {
+			if (inventoryActive == null) continue;
+			inventoryActive.getZocker().getPlayer().closeInventory();
+		}
 	}
 
 	public static CorePlugin getPlugin() {
