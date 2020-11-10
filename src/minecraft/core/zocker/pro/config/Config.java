@@ -1,5 +1,6 @@
 package minecraft.core.zocker.pro.config;
 
+import com.vdurmont.semver4j.Semver;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -10,18 +11,16 @@ import java.util.List;
 
 public class Config {
 
-	private static List<Config> CONFIGS = new ArrayList<>();
+	private static final List<Config> CONFIGS = new ArrayList<>();
 
 	private String pluginName;
 	private String name;
 	private String path;
+	private String version;
+	private boolean firstSetup;
 	private YamlConfiguration configuration;
 
 	public Config(String fileName, String pluginName) {
-		new Config(fileName, pluginName, "plugins/" + pluginName + "/");
-	}
-
-	public Config(String fileName, String pluginName, String path) {
 		for (Config config : CONFIGS) {
 			if (config.getPluginName().equalsIgnoreCase(pluginName) && config.getName().equalsIgnoreCase(fileName)) return;
 		}
@@ -30,20 +29,28 @@ public class Config {
 		this.pluginName = pluginName;
 		this.path = "plugins/" + pluginName + "/";
 
-		File file = new File(path + name);
-		File folder = new File(path);
 
 		try {
+			File folder = new File("plugins/" + pluginName + "/");
 			if (!folder.exists()) {
 				folder.mkdirs();
 			}
 
+			File file = new File(this.path + this.name);
 			if (!file.exists()) {
 				file.createNewFile();
+				this.configuration = YamlConfiguration.loadConfiguration(file);
+				this.configuration.set("config.version", "0.0.1");
+				this.configuration.set("config.setup", true);
+				this.version = "0.0.1";
+				this.firstSetup = true;
+			} else {
+				this.configuration = YamlConfiguration.loadConfiguration(file);
+				this.version = this.configuration.getString("config.version");
+				this.firstSetup = false;
 			}
 
-			this.configuration = YamlConfiguration.loadConfiguration(file);
-
+			this.configuration.save(file);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -51,8 +58,17 @@ public class Config {
 		CONFIGS.add(this);
 	}
 
-	public void set(String keyPath, Object value) {
-		this.configuration.set(keyPath, value);
+	public void set(String keyPath, Object value, String version) { // in build 0.0.2
+		if (this.isFirstSetup()) {
+			this.configuration.set(keyPath, value);
+			return;
+		}
+
+		Semver semver = new Semver(version);
+		if (semver.isGreaterThan(this.version)) { // config version
+			this.configuration.set(keyPath, value);
+			this.setVersion(version, true);
+		}
 	}
 
 	public ConfigurationSection getSection(String keyPath) {
@@ -90,7 +106,7 @@ public class Config {
 	 * Read the key from the file
 	 *
 	 * @param keyPath The path to read the key
-	 * @return
+	 * @return value
 	 */
 	public String getString(String keyPath) {
 		if (keyPath == null) throw new NullPointerException("Config keypath is null.");
@@ -218,6 +234,34 @@ public class Config {
 
 	public String getPath() {
 		return this.path;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public boolean isFirstSetup() {
+		return firstSetup;
+	}
+
+	public void setFirstSetup(boolean firstSetup) {
+		this.firstSetup = firstSetup;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public void setVersion(String version, boolean saveFile) {
+		this.version = version;
+		if (!saveFile) return;
+
+		try {
+			this.configuration.set("config.version", version);
+			this.configuration.save(new File(this.path + this.name));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static Config getConfig(String fileName, String pluginName) {

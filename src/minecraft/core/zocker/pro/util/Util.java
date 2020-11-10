@@ -27,7 +27,6 @@ public class Util {
 	}
 
 	public static double getRandomNumberBetween(double min, double max) {
-		System.out.println("min : " + min + " max : " + max);
 		if (min == 0 && max == 0) return 0;
 
 		if (!(min < 0 || max < 0)) {

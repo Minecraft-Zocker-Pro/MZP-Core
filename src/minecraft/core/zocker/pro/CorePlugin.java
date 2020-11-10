@@ -1,5 +1,6 @@
 package minecraft.core.zocker.pro;
 
+import minecraft.core.zocker.pro.compatibility.CompatibleMaterial;
 import org.bukkit.Material;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -14,6 +15,7 @@ public abstract class CorePlugin extends JavaPlugin {
 	private Material displayItem;
 	private PluginDescriptionFile pluginDescriptionFile;
 	private String helpCommand;
+	private String pluginName;
 
 	@Override
 	public void onEnable() {
@@ -22,8 +24,8 @@ public abstract class CorePlugin extends JavaPlugin {
 		if (PLUGINS.containsKey(this.getName())) return;
 
 		this.pluginDescriptionFile = getDescription();
-		this.displayItem = Material.SIGN;
-
+		this.setDisplayItem(CompatibleMaterial.OAK_SIGN.getMaterial());
+		this.setPluginName("MZP-Core");
 		PLUGINS.put(this.getName(), this);
 	}
 
@@ -41,6 +43,14 @@ public abstract class CorePlugin extends JavaPlugin {
 
 	public String getHelpCommand() {
 		return helpCommand;
+	}
+
+	public String getPluginName() {
+		return pluginName;
+	}
+
+	public void setPluginName(String pluginName) {
+		this.pluginName = pluginName;
 	}
 
 	public void registerCommand() {
