@@ -1,14 +1,12 @@
 package minecraft.core.zocker.pro.command;
 
-import minecraft.core.zocker.pro.config.Config;
+import minecraft.core.zocker.pro.Main;
 import org.bukkit.command.CommandSender;
 
 import java.util.Arrays;
 import java.util.List;
 
 public abstract class SubCommand {
-
-	private static final Config MESSAGES = Config.getConfig("message.yml", "MZP-Core");
 
 	private String name;
 	private int expectedArgs;
@@ -67,18 +65,18 @@ public abstract class SubCommand {
 				return true;
 			}
 			case FAILURE_PERMISSION: {
-				if (MESSAGES == null) throw new NullPointerException("Message.yml file not found.");
-				sender.sendMessage(MESSAGES.getString("message.prefix") + MESSAGES.getString("message.command.permission.deny"));
+				if (Main.CORE_MESSAGE == null) throw new NullPointerException("Message.yml file not found.");
+				sender.sendMessage(Main.CORE_MESSAGE.getString("message.prefix") + Main.CORE_MESSAGE.getString("message.command.permission.deny"));
 				return true;
 			}
 			case FAILURE_WRONG_NAME: {
-				if (MESSAGES == null) throw new NullPointerException("Message.yml file not found.");
-				sender.sendMessage(MESSAGES.getString("message.prefix") + MESSAGES.getString("message.command.sub.wrong"));
+				if (Main.CORE_MESSAGE == null) throw new NullPointerException("Message.yml file not found.");
+				sender.sendMessage(Main.CORE_MESSAGE.getString("message.prefix") + Main.CORE_MESSAGE.getString("message.command.sub.wrong"));
 				return true;
 			}
 			case FAILURE_WRONG_ARGS_LENGTH: {
-				if (MESSAGES == null) throw new NullPointerException("Message.yml file not found.");
-				sender.sendMessage(MESSAGES.getString("message.prefix") + MESSAGES.getString("message.command.arg.length"));
+				if (Main.CORE_MESSAGE == null) throw new NullPointerException("Message.yml file not found.");
+				sender.sendMessage(Main.CORE_MESSAGE.getString("message.prefix") + Main.CORE_MESSAGE.getString("message.command.arg.length"));
 				return true;
 			}
 		}

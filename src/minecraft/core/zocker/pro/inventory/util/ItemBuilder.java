@@ -4,6 +4,8 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import minecraft.core.zocker.pro.compatibility.CompatibleMaterial;
+import minecraft.core.zocker.pro.compatibility.ServerProject;
+import minecraft.core.zocker.pro.compatibility.ServerVersion;
 import minecraft.core.zocker.pro.util.Reflection;
 import org.bukkit.*;
 import org.bukkit.block.banner.Pattern;
@@ -95,7 +97,19 @@ public class ItemBuilder {
 	 * @return the unbreakable
 	 */
 	public ItemBuilder setUnbreakable(boolean unbreakable) {
+		if(ServerVersion.isServerVersionAtLeast(ServerVersion.V1_9)) {
+			this.itemMeta.setUnbreakable(unbreakable);
+			return this;
+		}
+		
+		if(ServerProject.isServer(ServerProject.CRAFTBUKKIT)) {
+			// TODO error message
+			return this;
+		}
+		
+		// TODO reflection for the 1.8 version
 //		this.itemMeta.spigot().setUnbreakable(unbreakable);
+		
 		return this;
 	}
 
@@ -109,17 +123,6 @@ public class ItemBuilder {
 	public ItemBuilder addEnchantment(Enchantment ench, int level) {
 		this.itemMeta.addEnchant(ench, level, false);
 		return this;
-	}
-
-	/**
-	 * Add ench item builder.
-	 *
-	 * @param ench  the ench
-	 * @param level the level
-	 * @return the item builder
-	 */
-	public ItemBuilder addEnch(Enchantment ench, int level) {
-		return this.addEnchantment(ench, level);
 	}
 
 	/**
@@ -143,17 +146,6 @@ public class ItemBuilder {
 	public ItemBuilder addUnsafeEnchantment(Enchantment ench, int level) {
 		this.itemMeta.addEnchant(ench, level, true);
 		return this;
-	}
-
-	/**
-	 * Add unsafe ench item builder.
-	 *
-	 * @param ench  the ench
-	 * @param level the level
-	 * @return the item builder
-	 */
-	public ItemBuilder addUnsafeEnch(Enchantment ench, int level) {
-		return this.addUnsafeEnchantment(ench, level);
 	}
 
 	/**
@@ -189,37 +181,6 @@ public class ItemBuilder {
 	}
 
 	/**
-	 * Remove ench item builder.
-	 *
-	 * @param ench the ench
-	 * @return the item builder
-	 */
-	public ItemBuilder removeEnch(Enchantment ench) {
-		return this.removeEnchantment(ench);
-	}
-
-	/**
-	 * Sets durability.
-	 *
-	 * @param durability the durability
-	 * @return the durability
-	 */
-	public ItemBuilder setDurability(short durability) {
-		this.itemStack.setDurability(durability);
-		return this;
-	}
-
-	/**
-	 * Durability item builder.
-	 *
-	 * @param durability the durability
-	 * @return the item builder
-	 */
-	public ItemBuilder durability(short durability) {
-		return this.setDurability(durability);
-	}
-
-	/**
 	 * Sets durability.
 	 *
 	 * @param durability the durability
@@ -230,14 +191,18 @@ public class ItemBuilder {
 		return this;
 	}
 
-	/**
-	 * Durability item builder.
-	 *
-	 * @param durability the durability
-	 * @return the item builder
-	 */
-	public ItemBuilder durability(int durability) {
-		return this.setDurability(durability);
+	public ItemBuilder addDamage(int damage) {
+		if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_13)) {
+			ItemMeta meta = this.itemMeta;
+			if (meta instanceof Damageable) {
+				((Damageable) meta).setDamage(((Damageable) meta).getDamage() + damage);
+				this.setItemMeta(meta);
+			}
+		} else {
+			this.setDurability((short) Math.max(0, this.itemStack.getDurability() + damage));
+		}
+
+		return this;
 	}
 
 	/**
@@ -253,17 +218,6 @@ public class ItemBuilder {
 	}
 
 	/**
-	 * Type item builder.
-	 *
-	 * @param type the type
-	 * @return the item builder
-	 */
-	@Deprecated
-	public ItemBuilder type(Material type) {
-		return this.setType(type);
-	}
-
-	/**
 	 * Sets data.
 	 *
 	 * @param data the data
@@ -273,17 +227,6 @@ public class ItemBuilder {
 	public ItemBuilder setData(MaterialData data) {
 		this.itemStack.setData(data);
 		return this;
-	}
-
-	/**
-	 * Data item builder.
-	 *
-	 * @param data the data
-	 * @return the item builder
-	 */
-	@Deprecated
-	public ItemBuilder data(MaterialData data) {
-		return this.setData(data);
 	}
 
 	/**
@@ -300,17 +243,6 @@ public class ItemBuilder {
 	}
 
 	/**
-	 * Meta item builder.
-	 *
-	 * @param itemMeta the item meta
-	 * @return the item builder
-	 */
-	@Deprecated
-	public ItemBuilder meta(ItemMeta itemMeta) {
-		return this.setItemMeta(itemMeta);
-	}
-
-	/**
 	 * Sets display name.
 	 *
 	 * @param name the name
@@ -319,16 +251,6 @@ public class ItemBuilder {
 	public ItemBuilder setDisplayName(String name) {
 		this.itemMeta.setDisplayName(name);
 		return this;
-	}
-
-	/**
-	 * Name item builder.
-	 *
-	 * @param name the name
-	 * @return the item builder
-	 */
-	public ItemBuilder name(String name) {
-		return this.setDisplayName(name);
 	}
 
 	/**
@@ -429,9 +351,18 @@ public class ItemBuilder {
 	 * @return the egg type
 	 */
 	public ItemBuilder setEggType(EntityType type) {
-//        if (this.itemStack.getType() == CompatibleMaterial.getSpawnEgg().MONSTER_EGG) {
-		((SpawnEgg) this.itemMeta).setSpawnedType(type);
-//        }
+		if (ServerVersion.isServerVersionAtOrBelow(ServerVersion.V1_8)) {
+			if (this.itemStack.getType() == Material.valueOf("MONSTER_EGG")) {
+				((SpawnEgg) this.itemMeta).setSpawnedType(type);
+				return this;
+			}
+		}
+
+		if (ServerVersion.isServerVersionAbove(ServerVersion.V1_8)) {
+			((SpawnEgg) this.itemMeta).setSpawnedType(type);
+			return this;
+		}
+
 		return this;
 	}
 
@@ -442,9 +373,20 @@ public class ItemBuilder {
 	 * @return the owning player
 	 */
 	public ItemBuilder setOwningPlayer(OfflinePlayer player) {
-		if (this.itemStack.getType() == CompatibleMaterial.PLAYER_HEAD.getMaterial()) {
-			((SkullMeta) this.itemMeta).setOwner(player.getName());
+		if (ServerVersion.isServerVersionBelow(ServerVersion.V1_8)) {
+			// TODO error
+			return this;
 		}
+
+		if (this.itemStack.getType() == CompatibleMaterial.PLAYER_HEAD.getMaterial()) {
+			SkullMeta meta = (SkullMeta) this.itemMeta;
+			if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_13)) {
+				meta.setOwningPlayer(player);
+			} else {
+				meta.setOwner(player.getName());
+			}
+		}
+
 		return this;
 	}
 
@@ -463,20 +405,6 @@ public class ItemBuilder {
 			throw new IllegalStateException("Unable to inject GameProfile");
 
 		return this;
-	}
-
-	public ItemBuilder skullURL(String url) {
-		return this;
-	}
-
-	/**
-	 * Skull item builder.
-	 *
-	 * @param owner the owner
-	 * @return the item builder
-	 */
-	public ItemBuilder skull(OfflinePlayer owner) {
-		return this.setOwningPlayer(owner);
 	}
 
 	/**
@@ -501,17 +429,6 @@ public class ItemBuilder {
 			((PotionMeta) this.itemMeta).addCustomEffect(effect, overwrite);
 		}
 		return this;
-	}
-
-	/**
-	 * Effect item builder.
-	 *
-	 * @param effect    the effect
-	 * @param overwrite the overwrite
-	 * @return the item builder
-	 */
-	public ItemBuilder effect(PotionEffect effect, boolean overwrite) {
-		return this.addCustomEffect(effect, overwrite);
 	}
 
 	/**
@@ -572,26 +489,86 @@ public class ItemBuilder {
 	}
 
 	/**
-	 * Map scaling item builder.
-	 *
-	 * @param value the value
-	 * @return the item builder
-	 */
-	public ItemBuilder mapScaling(boolean value) {
-		return this.setMapScaling(value);
-	}
-
-	/**
 	 * Is leather armor boolean.
 	 *
 	 * @return the boolean
 	 */
 	private boolean isLeatherArmor() {
 		Material material = itemStack.getType();
-		return material == Material.LEATHER_HELMET ||
-			material == Material.LEATHER_CHESTPLATE ||
-			material == Material.LEATHER_LEGGINGS ||
-			material == Material.LEATHER_BOOTS;
+		return material == CompatibleMaterial.LEATHER_HELMET.getMaterial() ||
+			material == CompatibleMaterial.LEATHER_CHESTPLATE.getMaterial() ||
+			material == CompatibleMaterial.LEATHER_LEGGINGS.getMaterial() ||
+			material == CompatibleMaterial.LEATHER_BOOTS.getMaterial();
+	}
+
+	/**
+	 * Is iron armor boolean.
+	 *
+	 * @return the boolean
+	 */
+	private boolean isIronArmor() {
+		Material material = itemStack.getType();
+		return material == CompatibleMaterial.IRON_HELMET.getMaterial() ||
+			material == CompatibleMaterial.IRON_CHESTPLATE.getMaterial() ||
+			material == CompatibleMaterial.IRON_LEGGINGS.getMaterial() ||
+			material == CompatibleMaterial.IRON_BOOTS.getMaterial();
+	}
+
+	/**
+	 * Is golden armor boolean.
+	 *
+	 * @return the boolean
+	 */
+	private boolean isGoldenArmor() {
+		Material material = itemStack.getType();
+		return material == CompatibleMaterial.GOLDEN_HELMET.getMaterial() ||
+			material == CompatibleMaterial.GOLDEN_CHESTPLATE.getMaterial() ||
+			material == CompatibleMaterial.GOLDEN_LEGGINGS.getMaterial() ||
+			material == CompatibleMaterial.GOLDEN_BOOTS.getMaterial();
+	}
+
+	/**
+	 * Is iron armor boolean.
+	 *
+	 * @return the boolean
+	 */
+	private boolean isChainmailArmor() {
+		Material material = itemStack.getType();
+		return material == CompatibleMaterial.CHAINMAIL_HELMET.getMaterial() ||
+			material == CompatibleMaterial.CHAINMAIL_CHESTPLATE.getMaterial() ||
+			material == CompatibleMaterial.CHAINMAIL_LEGGINGS.getMaterial() ||
+			material == CompatibleMaterial.CHAINMAIL_BOOTS.getMaterial();
+	}
+
+	/**
+	 * Is iron armor boolean.
+	 *
+	 * @return the boolean
+	 */
+	private boolean isDiamondArmor() {
+		Material material = itemStack.getType();
+		return material == CompatibleMaterial.DIAMOND_HELMET.getMaterial() ||
+			material == CompatibleMaterial.DIAMOND_CHESTPLATE.getMaterial() ||
+			material == CompatibleMaterial.DIAMOND_LEGGINGS.getMaterial() ||
+			material == CompatibleMaterial.DIAMOND_BOOTS.getMaterial();
+	}
+
+	/**
+	 * Is iron armor boolean.
+	 *
+	 * @return the boolean
+	 */
+	private boolean isNetheriteArmor() {
+		if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_16)) {
+			Material material = itemStack.getType();
+			return material == CompatibleMaterial.NETHERITE_HELMET.getMaterial() ||
+				material == CompatibleMaterial.NETHERITE_CHESTPLATE.getMaterial() ||
+				material == CompatibleMaterial.NETHERITE_LEGGINGS.getMaterial() ||
+				material == CompatibleMaterial.NETHERITE_BOOTS.getMaterial();
+		}
+
+		// TODO error;
+		return false;
 	}
 
 	/**
@@ -791,16 +768,6 @@ public class ItemBuilder {
 	}
 
 	/**
-	 * Author item builder.
-	 *
-	 * @param author the author
-	 * @return the item builder
-	 */
-	public ItemBuilder author(String author) {
-		return this.setBookAuthor(author);
-	}
-
-	/**
 	 * Sets book author.
 	 *
 	 * @param author the author
@@ -811,17 +778,6 @@ public class ItemBuilder {
 			((BookMeta) this.itemMeta).setAuthor(author);
 		}
 		return this;
-	}
-
-	/**
-	 * Sets page.
-	 *
-	 * @param page the page
-	 * @param data the data
-	 * @return the page
-	 */
-	public ItemBuilder setPage(int page, String data) {
-		return this.setBookPage(page, data);
 	}
 
 	/**
@@ -836,16 +792,6 @@ public class ItemBuilder {
 			((BookMeta) this.itemMeta).setPage(page, data);
 		}
 		return this;
-	}
-
-	/**
-	 * Title item builder.
-	 *
-	 * @param title the title
-	 * @return the item builder
-	 */
-	public ItemBuilder title(String title) {
-		return this.setBookTitle(title);
 	}
 
 	/**
