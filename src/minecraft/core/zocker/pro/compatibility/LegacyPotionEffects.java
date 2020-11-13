@@ -10,8 +10,6 @@ public class LegacyPotionEffects {
     private LegacyPotionEffects() {
     }
 
-    protected final static Random rand = new Random();
-
     private final static HashMap<Integer, String> potionEffectNames = new HashMap() {
         {
             put(PotionEffectType.SPEED.getId(), "Speed");

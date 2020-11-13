@@ -74,6 +74,10 @@ public class Main extends CorePlugin {
 	public void buildConfig() {
 		// Config		
 		CORE_CONFIG = new Config("core.yml", this.getPluginName());
+		
+		CORE_CONFIG.set("core.server.name", "my-server", "0.0.2");
+		
+		CORE_CONFIG.save();
 
 		// Storage
 		CORE_STORAGE = new Config("storage.yml", this.getPluginName());

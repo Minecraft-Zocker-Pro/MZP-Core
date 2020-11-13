@@ -33,12 +33,14 @@ public class Config {
 		try {
 			File folder = new File("plugins/" + pluginName + "/");
 			if (!folder.exists()) {
-				folder.mkdirs();
+				boolean result = folder.mkdirs();
+				if (!result) return; // TODO error message
 			}
 
 			File file = new File(this.path + this.name);
 			if (!file.exists()) {
-				file.createNewFile();
+				boolean result = file.createNewFile();
+				if (!result) return; // TODO error message
 				this.configuration = YamlConfiguration.loadConfiguration(file);
 				this.configuration.set("config.version", "0.0.1");
 				this.configuration.set("config.setup", true);
@@ -61,6 +63,7 @@ public class Config {
 	public void set(String keyPath, Object value, String version) { // in build 0.0.2
 		if (this.isFirstSetup()) {
 			this.configuration.set(keyPath, value);
+			this.setVersion(version, true);
 			return;
 		}
 

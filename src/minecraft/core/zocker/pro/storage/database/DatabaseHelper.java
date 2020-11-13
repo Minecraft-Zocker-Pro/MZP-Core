@@ -38,12 +38,12 @@ public abstract class DatabaseHelper {
 
 	// region Select
 
-	public ResultSet select(String table, String key, String where, String condition) {
-		if (table == null || key == null || where == null || condition == null) return null;
+	public ResultSet select(String table, String column, String where, String condition) {
+		if (table == null || column == null || where == null || condition == null) return null;
 
 		try {
 			PreparedStatement selectStatement;
-			String selectString = "SELECT " + key + " FROM " + table + " WHERE " + where + " = ?";
+			String selectString = "SELECT " + column + " FROM " + table + " WHERE " + where + " = ?";
 
 			if (StorageManager.isMySQL()) {
 				if (StorageManager.getMySQLDatabase() == null) {
@@ -73,18 +73,18 @@ public abstract class DatabaseHelper {
 		return null;
 	}
 
-	public ResultSet selectCommand(String tableName, String[] keys, String where, String condition) {
-		if ((tableName != null) && (keys.length > 0) && (where != null) && (condition != null)) {
+	public ResultSet select(String table, String[] columns, String where, String condition) {
+		if ((table != null) && (columns.length > 0) && (where != null) && (condition != null)) {
 
 			String selectString = "SELECT";
 			int i = 1;
-			for (String key : keys) {
+			for (String key : columns) {
 				selectString += " " + key;
-				if (!key.equals(keys[keys.length - 1])) {
+				if (!key.equals(columns[columns.length - 1])) {
 					selectString += ",";
 				}
 			}
-			selectString += " FROM " + tableName + " WHERE " + where + " = ?";
+			selectString += " FROM " + table + " WHERE " + where + " = ?";
 			try {
 				PreparedStatement selectStatement;
 				if (StorageManager.isMySQL()) {
@@ -113,13 +113,13 @@ public abstract class DatabaseHelper {
 		} else return null;
 	}
 
-	public ResultSet selectConditionalCommand(String tableName, String column, String[] primaryKeys, Object[] primaryValues) {
-		if (tableName == null || column == null || primaryKeys.length != primaryValues.length) return null;
+	public ResultSet selectConditional(String table, String column, String[] primaryKeys, Object[] primaryValues) {
+		if (table == null || column == null || primaryKeys.length != primaryValues.length) return null;
 
 		StringBuilder selectString = new StringBuilder("SELECT");
 
 		selectString.append(" ").append(column);
-		selectString.append(" FROM ").append(tableName).append(" WHERE ");
+		selectString.append(" FROM ").append(table).append(" WHERE ");
 
 		for (String primaryKey : primaryKeys) {
 			selectString.append(primaryKey).append(" = ?");
@@ -156,8 +156,8 @@ public abstract class DatabaseHelper {
 		}
 	}
 
-	public ResultSet selectConditionalCommand(String tableName, String[] columns, String[] primaryKeys, Object[] primaryValues) {
-		if (tableName == null || columns == null || primaryKeys.length != primaryValues.length) return null;
+	public ResultSet selectConditional(String table, String[] columns, String[] primaryKeys, Object[] primaryValues) {
+		if (table == null || columns == null || primaryKeys.length != primaryValues.length) return null;
 
 		StringBuilder selectString = new StringBuilder("SELECT");
 
@@ -168,7 +168,7 @@ public abstract class DatabaseHelper {
 			}
 		}
 
-		selectString.append(" FROM ").append(tableName).append(" WHERE ");
+		selectString.append(" FROM ").append(table).append(" WHERE ");
 
 		for (String primaryKey : primaryKeys) {
 			selectString.append(primaryKey).append(" = ?");
@@ -210,15 +210,15 @@ public abstract class DatabaseHelper {
 
 	// region Update
 
-	public boolean updateCommand(String tableName, String[] keys, Object[] values, String where, String condition) {
-		if (((tableName != null)) && (keys.length > 0) && (keys.length == values.length)) {
+	public boolean update(String table, String[] columns, Object[] values, String where, String condition) {
+		if (((table != null)) && (columns.length > 0) && (columns.length == values.length)) {
 			int i = 1;
-			String updateString = "UPDATE " + tableName + " SET";
+			String updateString = "UPDATE " + table + " SET";
 			try {
 				//add "?" for all columns to command
-				for (String key : keys) {
+				for (String key : columns) {
 					updateString += " " + key + " = ?";
-					if (!key.equals(keys[keys.length - 1])) {
+					if (!key.equals(columns[columns.length - 1])) {
 						updateString += ",";
 					}
 				}
@@ -244,7 +244,7 @@ public abstract class DatabaseHelper {
 				}
 
 				//add all columns and values to command
-				for (int x = 0; x < keys.length; x++) {
+				for (int x = 0; x < columns.length; x++) {
 					if (values[x] != null) {
 						updateStatement.setString(i, values[x].toString());
 					} else {
@@ -267,11 +267,11 @@ public abstract class DatabaseHelper {
 
 	}
 
-	public boolean updateCommand(String tableName, String key, Object value, String where, String condition) {
-		if ((tableName != null) && (key != null) && (value != null) && (where != null) && (condition != null)) {
+	public boolean update(String table, String column, Object value, String where, String condition) {
+		if ((table != null) && (column != null) && (value != null) && (where != null) && (condition != null)) {
 			int i = 1;
-			String updateString = "UPDATE " + tableName + " SET";
-			updateString += " " + key + " = ? WHERE " + where + " = ?";
+			String updateString = "UPDATE " + table + " SET";
+			updateString += " " + column + " = ? WHERE " + where + " = ?";
 			try {
 				PreparedStatement updateStatement;
 				if (StorageManager.isMySQL()) {
@@ -307,11 +307,11 @@ public abstract class DatabaseHelper {
 
 	}
 
-	public boolean updateConditionalCommand(String tableName, String key, Object value, String[] whereKeys, Object[] whereValues) {
-		if (((tableName != null)) && (key != null) && (value != null) && (whereKeys != null) && (whereValues != null)) {
+	public boolean updateConditional(String table, String column, Object value, String[] whereKeys, Object[] whereValues) {
+		if (((table != null)) && (column != null) && (value != null) && (whereKeys != null) && (whereValues != null)) {
 			int i = 0;
-			String updateString = "UPDATE " + tableName + " SET";
-			updateString += " " + key + " = ? WHERE ";
+			String updateString = "UPDATE " + table + " SET";
+			updateString += " " + column + " = ? WHERE ";
 
 			for (String whereKey : whereKeys) {
 				updateString += whereKey;
@@ -361,12 +361,12 @@ public abstract class DatabaseHelper {
 
 	}
 
-	public boolean updateConditionalCommand(String tableName, String[] keys, Object[] values, String[] whereKeys, Object[] whereValues) {
-		if ((tableName != null) && (keys.length > 0) && (keys.length == values.length) && (whereKeys != null) && (whereValues != null)) {
-			StringBuilder updateString = new StringBuilder("UPDATE " + tableName + " SET");
-			for (String key : keys) {
+	public boolean updateConditional(String table, String[] columns, Object[] values, String[] whereKeys, Object[] whereValues) {
+		if ((table != null) && (columns.length > 0) && (columns.length == values.length) && (whereKeys != null) && (whereValues != null)) {
+			StringBuilder updateString = new StringBuilder("UPDATE " + table + " SET");
+			for (String key : columns) {
 				updateString.append(" ").append(key).append(" = ?");
-				if (!key.equals(keys[keys.length - 1])) {
+				if (!key.equals(columns[columns.length - 1])) {
 					updateString.append(",");
 				}
 			}
@@ -402,7 +402,7 @@ public abstract class DatabaseHelper {
 					updateStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(updateString.toString());
 				}
 
-				for (int x = 0; x < keys.length; x++) {
+				for (int x = 0; x < columns.length; x++) {
 					if (values[x] != null) {
 						updateStatement.setString(x + 1, values[x].toString());
 					} else {
@@ -411,7 +411,7 @@ public abstract class DatabaseHelper {
 				}
 
 				for (int x = 0; x < whereValues.length; x++) {
-					updateStatement.setString(x + keys.length + 1, whereValues[x].toString());
+					updateStatement.setString(x + columns.length + 1, whereValues[x].toString());
 				}
 
 				boolean success = updateStatement.executeUpdate() > 0;
@@ -431,14 +431,14 @@ public abstract class DatabaseHelper {
 
 	// region Insert
 
-	public boolean insert(String table, String[] keys, Object[] values) {
+	public boolean insert(String table, String[] columns, Object[] values) {
 		int i = 1;
 		String insertString = "INSERT INTO " + table + " (";
 
 		// add columns to command
-		for (String key : keys) {
+		for (String key : columns) {
 			insertString += " " + key;
-			if (!key.equals(keys[keys.length - 1])) {
+			if (!key.equals(columns[columns.length - 1])) {
 				insertString += ",";
 			}
 		}
@@ -494,8 +494,8 @@ public abstract class DatabaseHelper {
 
 	// region Delete
 
-	public boolean deleteCommand(String tableName, String where, String condition) {
-		if ((tableName != null) && (where != null) && (condition != null)) {
+	public boolean delete(String table, String where, String condition) {
+		if ((table != null) && (where != null) && (condition != null)) {
 			String deleteString = "DELETE FROM ? WHERE ? = ?";
 
 			try {
@@ -518,7 +518,7 @@ public abstract class DatabaseHelper {
 					deleteStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(deleteString);
 				}
 
-				deleteStatement.setString(1, tableName);
+				deleteStatement.setString(1, table);
 				deleteStatement.setString(2, where);
 				deleteStatement.setString(3, condition);
 
@@ -534,12 +534,12 @@ public abstract class DatabaseHelper {
 
 	}
 
-	public boolean deleteConditional(String tablename, String[] keys, Object[] values) {
-		if ((tablename != null) && keys.length > 0 && values.length > 0) {
-			String deleteString = "DELETE FROM " + tablename + " where ";
-			for (String key : keys) {
+	public boolean deleteConditional(String table, String[] columns, Object[] values) {
+		if ((table != null) && columns.length > 0 && values.length > 0) {
+			String deleteString = "DELETE FROM " + table + " where ";
+			for (String key : columns) {
 				deleteString += key + " = ?";
-				if (!key.equals(keys[keys.length - 1])) {
+				if (!key.equals(columns[columns.length - 1])) {
 					deleteString += " AND ";
 				}
 			}
@@ -564,7 +564,7 @@ public abstract class DatabaseHelper {
 					deleteStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(deleteString);
 				}
 
-				for (int i = 0; i < keys.length; i++) {
+				for (int i = 0; i < columns.length; i++) {
 					deleteStatement.setString(i + 1, values[i].toString());
 				}
 				boolean success = deleteStatement.executeUpdate() > 0;

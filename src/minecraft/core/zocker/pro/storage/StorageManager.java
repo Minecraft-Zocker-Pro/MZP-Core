@@ -20,7 +20,7 @@ public class StorageManager {
 
 	// disk
 	private static JSONDisk jsonDisk;
-	
+
 	// cache
 	private static MemoryCache memoryCache;
 	private static RedisCache redisDatabase;
@@ -83,4 +83,7 @@ public class StorageManager {
 		return redisDatabase != null;
 	}
 
+	public static String getServerName() {
+		return Main.CORE_CONFIG.getString("core.server.name");
+	}
 }

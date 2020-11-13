@@ -31,7 +31,11 @@ public class Zocker {
 	public Zocker(UUID uuid) {
 		ZOCKERS.putIfAbsent(uuid, this);
 
-		this.player = Bukkit.getPlayer(uuid);
+		Player player = Bukkit.getPlayer(uuid);
+		if (player != null) {
+			this.player = player;
+		}
+		
 		this.uuid = uuid;
 	}
 
@@ -173,10 +177,10 @@ public class Zocker {
 		return CompletableFuture.supplyAsync(() -> {
 			if (StorageManager.isMySQL()) {
 				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
-				return StorageManager.getMySQLDatabase().updateCommand(table, column, value.toString(), uniqueKey, uniqueValue.toString());
+				return StorageManager.getMySQLDatabase().update(table, column, value.toString(), uniqueKey, uniqueValue.toString());
 			} else {
 				assert StorageManager.getSQLiteDatabase() != null : "Update command failed.";
-				return StorageManager.getSQLiteDatabase().updateCommand(table, column, value.toString(), uniqueKey, uniqueValue.toString());
+				return StorageManager.getSQLiteDatabase().update(table, column, value.toString(), uniqueKey, uniqueValue.toString());
 			}
 		});
 	}
