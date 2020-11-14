@@ -2,6 +2,7 @@ package minecraft.core.zocker.pro;
 
 import minecraft.core.zocker.pro.command.CoreCommand;
 import minecraft.core.zocker.pro.compatibility.CompatibleMaterial;
+import minecraft.core.zocker.pro.compatibility.ServerProject;
 import minecraft.core.zocker.pro.config.Config;
 import minecraft.core.zocker.pro.inventory.InventoryActive;
 import minecraft.core.zocker.pro.listener.PlayerJoinListener;
@@ -28,6 +29,13 @@ public class Main extends CorePlugin {
 		this.setHelpCommand("core");
 		this.setPluginName("MZP-Core");
 
+
+		if (ServerProject.isServer(ServerProject.CRAFTBUKKIT)) {
+			System.out.println("MZP-Core it's not compatible with CraftBukkit! Use Spigot or similar server software.");
+			onDisable();
+			return;
+		}
+
 		this.buildConfig();
 
 		StorageManager.initialize();
@@ -44,10 +52,12 @@ public class Main extends CorePlugin {
 	@Override
 	public void onDisable() {
 		if (StorageManager.isMySQL()) {
+			assert StorageManager.getMySQLDatabase() != null;
 			StorageManager.getMySQLDatabase().disconnect();
 		}
 
 		if (StorageManager.isSQLite()) {
+			assert StorageManager.getSQLiteDatabase() != null;
 			StorageManager.getSQLiteDatabase().disconnect();
 		}
 
@@ -74,9 +84,9 @@ public class Main extends CorePlugin {
 	public void buildConfig() {
 		// Config		
 		CORE_CONFIG = new Config("core.yml", this.getPluginName());
-		
+
 		CORE_CONFIG.set("core.server.name", "my-server", "0.0.2");
-		
+
 		CORE_CONFIG.save();
 
 		// Storage

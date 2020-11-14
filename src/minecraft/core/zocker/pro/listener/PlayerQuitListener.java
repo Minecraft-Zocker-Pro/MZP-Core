@@ -8,8 +8,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class PlayerQuitListener implements Listener {
 
 	// TODO remove zocker after x time to prevent storage read transaction
-	
-	@EventHandler
+
+	@EventHandler(ignoreCancelled = true)
 	public void onPlayerQuit(PlayerQuitEvent e) {
 		Zocker.removeZocker(e.getPlayer().getUniqueId());
 	}

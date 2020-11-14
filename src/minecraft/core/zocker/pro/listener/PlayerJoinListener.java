@@ -9,7 +9,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 public class PlayerJoinListener implements Listener {
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onPlayerJoin(PlayerJoinEvent e) {
 		Zocker zocker = Zocker.getZocker(e.getPlayer().getUniqueId());
 		if (zocker != null) return;
