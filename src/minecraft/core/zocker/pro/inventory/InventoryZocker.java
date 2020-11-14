@@ -111,7 +111,7 @@ public abstract class InventoryZocker {
 	 * @return the border
 	 */
 	public ItemStack getBorder() {
-		return new ItemBuilder(CompatibleMaterial.BLACK_STAINED_GLASS_PANE.getMaterial()).setName(" ").toItemStack();
+		return new ItemBuilder(CompatibleMaterial.BLACK_STAINED_GLASS_PANE.getItem()).setName(" ").toItemStack();
 	}
 
 	/**

@@ -6,8 +6,7 @@ import org.bukkit.entity.Player;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +34,7 @@ public class Zocker {
 		if (player != null) {
 			this.player = player;
 		}
-		
+
 		this.uuid = uuid;
 	}
 
@@ -121,7 +120,6 @@ public class Zocker {
 
 	public CompletableFuture<String> get(String table, String column, String uniqueKey, Object uniqueValue) {
 		if (table == null || column == null || uniqueKey == null) return null;
-		long start = System.currentTimeMillis();
 
 		return CompletableFuture.supplyAsync(() -> {
 			if (StorageManager.isRedis()) {
@@ -141,11 +139,6 @@ public class Zocker {
 					if (result.next()) {
 						String value = result.getString(column);
 
-//						long finish = System.currentTimeMillis() - start;
-//						if (finish >= 0) {
-//							System.out.println("m | " + table + " | " + uniqueValue.toString() + " get : " + column + " - " + finish + "ms");
-//						}
-
 						result.close();
 						return value;
 					}
@@ -154,6 +147,86 @@ public class Zocker {
 					return null;
 				}
 
+				return null;
+			}
+		});
+	}
+
+	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String uniqueKey, Object uniqueValue) {
+		if (table == null || columns == null) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				ResultSet result;
+				if (StorageManager.isMySQL()) {
+					assert StorageManager.getMySQLDatabase() != null : "Select command failed";
+					result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+				} else {
+					assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
+					result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+				}
+				if (result == null) return null;
+
+				if (result.next()) {
+					Map<String, String> hmsetData = new HashMap<>();
+					for (String column : columns) {
+						String value = result.getString(column);
+						if (value == null) continue;
+
+
+						hmsetData.put(column, value);
+					}
+
+					result.close();
+
+					return hmsetData;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return null;
+			}
+
+			return null;
+		});
+	}
+
+	// endregion
+
+	// region GetList
+
+	public CompletableFuture<List<String>> getList(String table, String[] primaryKeys) {
+		return this.getList(table, primaryKeys, "uuid", this.uuid);
+	}
+
+	public CompletableFuture<List<String>> getList(String table, String[] primaryKeys, String uniqueKey, Object uniqueValue) {
+		if (table == null || primaryKeys == null) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				ResultSet result;
+				if (StorageManager.isMySQL()) {
+					assert StorageManager.getMySQLDatabase() != null : "Select list command failed";
+					result = StorageManager.getMySQLDatabase().select(table, primaryKeys, uniqueKey, uniqueValue.toString());
+				} else {
+					assert StorageManager.getSQLiteDatabase() != null : "Select list command failed.";
+					result = StorageManager.getSQLiteDatabase().select(table, primaryKeys, uniqueKey, uniqueValue.toString());
+				}
+				if (result == null) return null;
+
+				List<String> data = new ArrayList<>();
+
+				while (result.next()) {
+					String primaryKey = result.getString(primaryKeys[1]);
+					if (primaryKey == null) continue;
+
+					data.add(primaryKey);
+				}
+
+				result.close();
+
+				return data;
+			} catch (SQLException e) {
+				e.printStackTrace();
 				return null;
 			}
 		});
@@ -322,6 +395,27 @@ public class Zocker {
 
 			assert StorageManager.getSQLiteDatabase() != null : "Insert command failed.";
 			return StorageManager.getSQLiteDatabase().insert(table, primaryKeys, primaryValues);
+		});
+	}
+
+	// endregion
+
+	// region InsertComplex
+
+	public CompletableFuture<Boolean> insert(String table, String[] columns, Object[] values, String[] primaryKeys, Object[] primaryValues, Object uniqueValue) {
+		if (primaryValues == null) return null;
+		if (primaryKeys == null) return null;
+		if (columns.length != values.length) return null;
+		if (primaryKeys.length != primaryValues.length) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Insert command failed.";
+				return StorageManager.getMySQLDatabase().insert(table, columns, values);
+			}
+
+			assert StorageManager.getSQLiteDatabase() != null : "Insert command failed.";
+			return StorageManager.getSQLiteDatabase().insert(table, columns, values);
 		});
 	}
 

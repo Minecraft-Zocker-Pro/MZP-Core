@@ -1204,4 +1204,30 @@ public enum CompatibleSound {
         }
 
     }
+
+    public static void playTeleportSound(Player player) {
+        if (player == null) return;
+
+        player.playSound(player.getLocation(), CompatibleSound.ENTITY_ENDERMAN_TELEPORT.getSound(), 2, 2);
+    }
+
+    public static void playChangedSound(Player player) {
+        if (player == null) return;
+
+        player.playSound(player.getLocation(), CompatibleSound.ENTITY_CHICKEN_EGG.getSound(), 2, 2);
+    }
+
+    public static void playSuccessSound(Player player) {
+        if (player == null) return;
+
+        player.playSound(player.getLocation(), CompatibleSound.ENTITY_PLAYER_LEVELUP.getSound(), 2, 2);
+    }
+
+    public static void playErrorSound(Player player) {
+        if (player == null) return;
+
+        player.playSound(player.getLocation(), CompatibleSound.BLOCK_NOTE_BLOCK_BASS.getSound(), 2, 2);
+    }
+    
+    
 }

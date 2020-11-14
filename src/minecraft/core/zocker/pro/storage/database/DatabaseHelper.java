@@ -38,12 +38,51 @@ public abstract class DatabaseHelper {
 
 	// region Select
 
+	public ResultSet select(String table, String[] columns) {
+		if ((table != null) && (columns.length > 0)) {
+
+			String selectString = "SELECT";
+			int i = 1;
+			for (String key : columns) {
+				selectString += " " + key;
+				if (!key.equals(columns[columns.length - 1])) {
+					selectString += ",";
+				}
+			}
+			selectString += " FROM `" + table + "`";
+			try {
+				PreparedStatement selectStatement;
+				if (StorageManager.isMySQL()) {
+					if (StorageManager.getMySQLDatabase() == null) {
+						// TODO error
+						return null;
+					}
+
+					selectStatement = StorageManager.getMySQLDatabase().getConnection().prepareStatement(selectString);
+
+				} else {
+					if (StorageManager.getSQLiteDatabase() == null) {
+						// TODO error
+						return null;
+					}
+
+					selectStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(selectString);
+				}
+
+				return selectStatement.executeQuery();
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return null;
+			}
+		} else return null;
+	}
+
 	public ResultSet select(String table, String column, String where, String condition) {
 		if (table == null || column == null || where == null || condition == null) return null;
 
 		try {
 			PreparedStatement selectStatement;
-			String selectString = "SELECT " + column + " FROM " + table + " WHERE " + where + " = ?";
+			String selectString = "SELECT " + column + " FROM `" + table + "` WHERE " + where + " = ?";
 
 			if (StorageManager.isMySQL()) {
 				if (StorageManager.getMySQLDatabase() == null) {
@@ -84,7 +123,7 @@ public abstract class DatabaseHelper {
 					selectString += ",";
 				}
 			}
-			selectString += " FROM " + table + " WHERE " + where + " = ?";
+			selectString += " FROM `" + table + "` WHERE " + where + " = ?";
 			try {
 				PreparedStatement selectStatement;
 				if (StorageManager.isMySQL()) {
@@ -119,7 +158,7 @@ public abstract class DatabaseHelper {
 		StringBuilder selectString = new StringBuilder("SELECT");
 
 		selectString.append(" ").append(column);
-		selectString.append(" FROM ").append(table).append(" WHERE ");
+		selectString.append(" FROM `").append(table).append("` WHERE ");
 
 		for (String primaryKey : primaryKeys) {
 			selectString.append(primaryKey).append(" = ?");
@@ -168,7 +207,7 @@ public abstract class DatabaseHelper {
 			}
 		}
 
-		selectString.append(" FROM ").append(table).append(" WHERE ");
+		selectString.append(" FROM `").append(table).append("` WHERE ");
 
 		for (String primaryKey : primaryKeys) {
 			selectString.append(primaryKey).append(" = ?");
@@ -213,7 +252,7 @@ public abstract class DatabaseHelper {
 	public boolean update(String table, String[] columns, Object[] values, String where, String condition) {
 		if (((table != null)) && (columns.length > 0) && (columns.length == values.length)) {
 			int i = 1;
-			String updateString = "UPDATE " + table + " SET";
+			String updateString = "UPDATE `" + table + "` SET";
 			try {
 				//add "?" for all columns to command
 				for (String key : columns) {
@@ -270,7 +309,7 @@ public abstract class DatabaseHelper {
 	public boolean update(String table, String column, Object value, String where, String condition) {
 		if ((table != null) && (column != null) && (value != null) && (where != null) && (condition != null)) {
 			int i = 1;
-			String updateString = "UPDATE " + table + " SET";
+			String updateString = "UPDATE `" + table + "` SET";
 			updateString += " " + column + " = ? WHERE " + where + " = ?";
 			try {
 				PreparedStatement updateStatement;
@@ -310,7 +349,7 @@ public abstract class DatabaseHelper {
 	public boolean updateConditional(String table, String column, Object value, String[] whereKeys, Object[] whereValues) {
 		if (((table != null)) && (column != null) && (value != null) && (whereKeys != null) && (whereValues != null)) {
 			int i = 0;
-			String updateString = "UPDATE " + table + " SET";
+			String updateString = "UPDATE `" + table + "` SET";
 			updateString += " " + column + " = ? WHERE ";
 
 			for (String whereKey : whereKeys) {
@@ -363,7 +402,7 @@ public abstract class DatabaseHelper {
 
 	public boolean updateConditional(String table, String[] columns, Object[] values, String[] whereKeys, Object[] whereValues) {
 		if ((table != null) && (columns.length > 0) && (columns.length == values.length) && (whereKeys != null) && (whereValues != null)) {
-			StringBuilder updateString = new StringBuilder("UPDATE " + table + " SET");
+			StringBuilder updateString = new StringBuilder("UPDATE `" + table + "` SET");
 			for (String key : columns) {
 				updateString.append(" ").append(key).append(" = ?");
 				if (!key.equals(columns[columns.length - 1])) {
@@ -433,7 +472,7 @@ public abstract class DatabaseHelper {
 
 	public boolean insert(String table, String[] columns, Object[] values) {
 		int i = 1;
-		String insertString = "INSERT INTO " + table + " (";
+		String insertString = "INSERT INTO `" + table + "` (";
 
 		// add columns to command
 		for (String key : columns) {
@@ -496,7 +535,7 @@ public abstract class DatabaseHelper {
 
 	public boolean delete(String table, String where, String condition) {
 		if ((table != null) && (where != null) && (condition != null)) {
-			String deleteString = "DELETE FROM ? WHERE ? = ?";
+			String deleteString = "DELETE FROM `" + table + "` WHERE " + where + " = '" + condition + "';";
 
 			try {
 				PreparedStatement deleteStatement;
@@ -518,10 +557,6 @@ public abstract class DatabaseHelper {
 					deleteStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(deleteString);
 				}
 
-				deleteStatement.setString(1, table);
-				deleteStatement.setString(2, where);
-				deleteStatement.setString(3, condition);
-
 				boolean success = deleteStatement.executeUpdate() > 0;
 				deleteStatement.close();
 
@@ -536,7 +571,7 @@ public abstract class DatabaseHelper {
 
 	public boolean deleteConditional(String table, String[] columns, Object[] values) {
 		if ((table != null) && columns.length > 0 && values.length > 0) {
-			String deleteString = "DELETE FROM " + table + " where ";
+			String deleteString = "DELETE FROM `" + table + "` WHERE ";
 			for (String key : columns) {
 				deleteString += key + " = ?";
 				if (!key.equals(columns[columns.length - 1])) {
