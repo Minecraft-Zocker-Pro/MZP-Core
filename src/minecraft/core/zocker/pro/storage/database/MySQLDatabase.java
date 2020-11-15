@@ -15,7 +15,7 @@ public class MySQLDatabase extends DatabaseHelper implements DatabaseInterface {
 				if (!connection.isClosed()) return;
 			}
 
-			connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database, username, password);
+			connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true", username, password);
 
 		} catch (SQLException e) {
 			e.printStackTrace();

@@ -64,6 +64,16 @@ public class Main extends CorePlugin {
 		if (StorageManager.isRedis()) {
 //			StorageManager.getRedisDatabase()
 		}
+
+		InventoryActive.getActiveInventorys().forEach((inventory, inventoryActive) -> {
+			inventoryActive.stopUpdating();
+			Zocker zocker = inventoryActive.getZocker();
+			if (zocker == null) return;
+
+			zocker.getPlayer().closeInventory();
+		});
+
+		InventoryActive.getActiveGUIs().clear();
 	}
 
 
@@ -141,11 +151,15 @@ public class Main extends CorePlugin {
 			new Zocker(player.getUniqueId());
 		}
 
-		// Close inventories if possible
-		for (InventoryActive inventoryActive : InventoryActive.getActiveInventorys().values()) {
-			if (inventoryActive == null) continue;
-			inventoryActive.getZocker().getPlayer().closeInventory();
-		}
+		InventoryActive.getActiveInventorys().forEach((inventory, inventoryActive) -> {
+			inventoryActive.stopUpdating();
+			Zocker zocker = inventoryActive.getZocker();
+			if (zocker == null) return;
+
+			zocker.getPlayer().closeInventory();
+		});
+
+		InventoryActive.getActiveGUIs().clear();
 	}
 
 	public static CorePlugin getPlugin() {

@@ -5,6 +5,9 @@ import minecraft.core.zocker.pro.compatibility.CompatibleMaterial;
 import minecraft.core.zocker.pro.inventory.builder.InventoryEntryBuilder;
 import minecraft.core.zocker.pro.inventory.page.InventoryPage;
 import minecraft.core.zocker.pro.inventory.util.ItemBuilder;
+import minecraft.core.zocker.pro.nms.NmsManager;
+import minecraft.core.zocker.pro.nms.api.anvil.AnvilCore;
+import minecraft.core.zocker.pro.nms.api.anvil.CustomAnvil;
 import minecraft.core.zocker.pro.util.Validator;
 import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -144,6 +147,19 @@ public abstract class InventoryZocker {
 	 * @param zocker the zocker
 	 */
 	private void playInventory(InventoryPage page, Zocker zocker) {
+		if (this instanceof InventoryAnvilZocker) {
+			InventoryAnvilZocker inventoryAnvilZocker = (InventoryAnvilZocker) this;
+			AnvilCore anvilCore = NmsManager.getAnvil();
+			if (anvilCore == null) return;
+
+			CustomAnvil anvil = anvilCore.createAnvil(zocker.getPlayer());
+			inventoryAnvilZocker.setAnvil(anvil);
+			
+			InventoryActive active = new InventoryActive(this, page, anvil.getInventory(), zocker);
+			actives.put(zocker.getUUID(), active);
+			return;
+		}
+
 		Inventory inventory = getSize() != null ?
 			Bukkit.createInventory(zocker.getPlayer(), getSize(), page == null ? getTitle() : page.getTitle()) :
 			Bukkit.createInventory(zocker.getPlayer(), getInventoryType(), page == null ? getTitle() : page.getTitle());

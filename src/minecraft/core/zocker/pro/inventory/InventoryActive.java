@@ -6,6 +6,9 @@ import minecraft.core.zocker.pro.Zocker;
 import minecraft.core.zocker.pro.compatibility.CompatibleSound;
 import minecraft.core.zocker.pro.inventory.page.InventoryPage;
 import minecraft.core.zocker.pro.inventory.util.ItemBuilder;
+import minecraft.core.zocker.pro.nms.NmsManager;
+import minecraft.core.zocker.pro.nms.api.anvil.AnvilCore;
+import minecraft.core.zocker.pro.nms.api.anvil.CustomAnvil;
 import minecraft.core.zocker.pro.util.Validator;
 import minecraft.core.zocker.pro.workers.JobRunnable;
 import minecraft.core.zocker.pro.workers.instances.WorkerPriority;
@@ -17,10 +20,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -98,6 +98,29 @@ public class InventoryActive {
 					this.getInventory().removeItem(itemStack);
 				}
 			}
+		}
+
+		if (this.inventoryZocker instanceof InventoryAnvilZocker) {
+			InventoryAnvilZocker inventoryAnvilZocker = (InventoryAnvilZocker) this.inventoryZocker;
+			AnvilCore anvilCore = NmsManager.getAnvil();
+			if (anvilCore == null) return;
+
+			CustomAnvil anvil = inventoryAnvilZocker.getAnvil();
+			anvil.setCustomTitle(inventoryAnvilZocker.getTitle());
+			anvil.setLevelCost(0);
+			anvil.setOutput(inventoryAnvilZocker.getResultInventoryEntry().getItem());
+			anvil.setOnChange(() -> {
+				ItemBuilder itemBuilder = new ItemBuilder(inventoryAnvilZocker.getResultInventoryEntry().getItem());
+				itemBuilder.setName(anvil.getRenameText());
+				anvil.setOutput(itemBuilder.toItemStack());
+			});
+
+			anvil.setLeftInput(inventoryAnvilZocker.getLeftInventoryEntry().getItem());
+			anvil.setRightInput(inventoryAnvilZocker.getRightInventoryEntry().getItem());
+
+			this.inventoryZocker.addItem(inventoryAnvilZocker.getLeftInventoryEntry());
+			this.inventoryZocker.addItem(inventoryAnvilZocker.getRightInventoryEntry());
+			this.inventoryZocker.addItem(inventoryAnvilZocker.getResultInventoryEntry());
 		}
 
 		for (Integer blacklistedSlot : this.inventoryZocker.getBlacklistedSlots()) {
@@ -240,11 +263,16 @@ public class InventoryActive {
 			public void run() {
 				Player player = zocker.getPlayer();
 				player.closeInventory();
-				player.openInventory(inventory);
+
+				if (inventoryZocker instanceof InventoryAnvilZocker) {
+					((InventoryAnvilZocker) inventoryZocker).getAnvil().open();
+				} else {
+					player.openInventory(inventory);
+				}
 			}
 		}.runTask(Main.getPlugin());
 
-		activeGUIs.put(inventory, this);
+		activeGUIs.putIfAbsent(inventory, this);
 
 		if (this.inventoryZocker instanceof InventoryUpdateZocker) {
 			InventoryUpdateZocker inventoryUpdateZocker = (InventoryUpdateZocker) this.inventoryZocker;
@@ -265,7 +293,6 @@ public class InventoryActive {
 							inventoryUpdateZocker.onUpdate();
 							inventoryUpdateZocker.update(zocker);
 							inventoryUpdateZocker.getEntries().clear();
-
 						}
 
 					} catch (Exception e) {
@@ -348,6 +375,10 @@ public class InventoryActive {
 		return activeGUIs;
 	}
 
+	public static HashMap<Inventory, InventoryActive> getActiveGUIs() {
+		return activeGUIs;
+	}
+
 	public static class GUIActiveListener implements Listener {
 
 		/**
@@ -401,6 +432,11 @@ public class InventoryActive {
 
 			if (player.getOpenInventory().getTopInventory().equals(inventory)) {
 				event.setCancelled(true);
+			}
+
+			if (active.getInventoryZocker() instanceof InventoryAnvilZocker) {
+				InventoryAnvilZocker inventoryAnvilZocker = (InventoryAnvilZocker) active.getInventoryZocker();
+				inventoryAnvilZocker.onResult(inventoryAnvilZocker.getAnvil().getRenameText());
 			}
 
 			GUIActiveEntry activeEntry = active.getActiveEntry(event.getSlot());
