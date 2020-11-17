@@ -154,7 +154,7 @@ public abstract class InventoryZocker {
 
 			CustomAnvil anvil = anvilCore.createAnvil(zocker.getPlayer());
 			inventoryAnvilZocker.setAnvil(anvil);
-			
+
 			InventoryActive active = new InventoryActive(this, page, anvil.getInventory(), zocker);
 			actives.put(zocker.getUUID(), active);
 			return;

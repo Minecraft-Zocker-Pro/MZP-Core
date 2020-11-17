@@ -262,6 +262,20 @@ public class Zocker {
 
 	// region SetComplex
 
+	public CompletableFuture<Boolean> set(String table, String[] columns, Object[] values, String uniqueKey, Object uniqueValue) {
+		if (table == null || columns.length != values.length || uniqueKey == null || uniqueValue == null) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
+				return StorageManager.getMySQLDatabase().update(table, columns, values, uniqueKey, uniqueValue.toString());
+			} else {
+				assert StorageManager.getSQLiteDatabase() != null : "Update command failed.";
+				return StorageManager.getSQLiteDatabase().update(table, columns, values, uniqueKey, uniqueValue.toString());
+			}
+		});
+	}
+
 	// endregion
 
 	// region Is

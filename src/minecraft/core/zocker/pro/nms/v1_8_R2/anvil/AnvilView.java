@@ -92,6 +92,7 @@ public class AnvilView extends ContainerAnvil implements CustomAnvil {
         if (cost >= 0) {
             this.a = cost;
         }
+        textChange.onChange();
     }
 
     @Override

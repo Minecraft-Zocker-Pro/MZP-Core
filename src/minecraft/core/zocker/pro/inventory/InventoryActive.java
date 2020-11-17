@@ -15,7 +15,6 @@ import minecraft.core.zocker.pro.workers.instances.WorkerPriority;
 import minecraft.core.zocker.pro.workers.instances.Workers;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -281,12 +280,6 @@ public class InventoryActive {
 				@Override
 				public void run() {
 					try {
-						if (this.getJob() != null) {
-							System.out.println("Worker: " + this.getName() + " running. " + this.getJob().toString());
-						} else {
-							System.out.println("Worker: " + this.getName() + " running");
-						}
-
 						if (!activeGUIs.containsValue(InventoryActive.this)) {
 							this.cancel();
 						} else {
@@ -393,8 +386,20 @@ public class InventoryActive {
 				if (active == null) return;
 				Zocker zocker = Zocker.getZocker(event.getPlayer().getUniqueId());
 				if (zocker != null) {
+
+					if (active.inventoryZocker instanceof InventoryAnvilZocker) {
+						active.inventory.clear();
+					}
+
 					active.inventoryZocker.close(zocker);
-					active.inventoryZocker.onClose(active.inventoryZocker, event);
+
+					new BukkitRunnable() {
+						@Override
+						public void run() {
+							active.inventoryZocker.onClose(active.inventoryZocker, event);
+						}
+					}.runTaskAsynchronously(Main.getPlugin());
+
 					active.inventoryZocker.removeFromActives(zocker, active);
 					return;
 				}
@@ -436,16 +441,21 @@ public class InventoryActive {
 
 			if (active.getInventoryZocker() instanceof InventoryAnvilZocker) {
 				InventoryAnvilZocker inventoryAnvilZocker = (InventoryAnvilZocker) active.getInventoryZocker();
-				inventoryAnvilZocker.onResult(inventoryAnvilZocker.getAnvil().getRenameText());
+				CustomAnvil anvil = inventoryAnvilZocker.getAnvil();
+				if (anvil == null) return;
+
+				if (event.getSlotType() == InventoryType.SlotType.RESULT) {
+					inventoryAnvilZocker.onResult(anvil.getRenameText());
+				}
 			}
 
 			GUIActiveEntry activeEntry = active.getActiveEntry(event.getSlot());
 			if (activeEntry == null) return;
 
 			if (event.getClick() == ClickType.LEFT || event.getClick() == ClickType.SHIFT_LEFT || event.getClick() == ClickType.WINDOW_BORDER_LEFT) {
-				player.playSound(player.getLocation(), CompatibleSound.ENTITY_CHICKEN_EGG.getSound(), 2, 2);
+				CompatibleSound.playChangedSound(player);
 			} else if (event.getClick() == ClickType.RIGHT || event.getClick() == ClickType.SHIFT_RIGHT || event.getClick() == ClickType.WINDOW_BORDER_RIGHT) {
-				player.playSound(player.getLocation(), CompatibleSound.ENTITY_CHICKEN_EGG.getSound(), 2, 2);
+				CompatibleSound.playChangedSound(player);
 			}
 
 			Consumer<InventoryClickEvent> consumer = activeEntry.getEntry().getClickAction(event.getClick());
