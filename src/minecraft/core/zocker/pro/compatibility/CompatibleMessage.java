@@ -3,6 +3,7 @@ package minecraft.core.zocker.pro.compatibility;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.Bukkit;
 
@@ -57,6 +58,14 @@ public class CompatibleMessage {
 			player.sendMessage(message);
 		} else {
 			player.sendMessage(TextComponent.fromLegacyText(message));
+		}
+	}
+
+	public static void sendMessage(CommandSender sender, String message) {
+		if (ServerVersion.isServerVersionAtOrBelow(ServerVersion.V1_8)) {
+			sender.sendMessage(message);
+		} else {
+			sender.sendMessage(TextComponent.fromLegacyText(message));
 		}
 	}
 
