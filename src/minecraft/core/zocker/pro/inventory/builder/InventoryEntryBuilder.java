@@ -20,7 +20,7 @@ public class InventoryEntryBuilder {
 	private Integer slot;
 	private TimeUnit updateTimeUnit;
 	private long updateOffset;
-	private boolean updateAsync = true;
+	private boolean async = true;
 
 	/**
 	 * Sets item.
@@ -78,11 +78,11 @@ public class InventoryEntryBuilder {
 	/**
 	 * Update async gui entry builder.
 	 *
-	 * @param updateAsync the update async
+	 * @param async the update async
 	 * @return the gui entry builder
 	 */
-	public InventoryEntryBuilder updateAsync(Boolean updateAsync) {
-		this.updateAsync = updateAsync;
+	public InventoryEntryBuilder setAsync(boolean async) {
+		this.async = async;
 		return this;
 	}
 
@@ -131,8 +131,8 @@ public class InventoryEntryBuilder {
 	 *
 	 * @return the boolean
 	 */
-	public boolean isUpdateAsync() {
-		return updateAsync;
+	public boolean isAsync() {
+		return async;
 	}
 
 	/**
@@ -227,8 +227,8 @@ public class InventoryEntryBuilder {
 			}
 
 			@Override
-			public Boolean isUpdateAsync() {
-				return updateAsync;
+			public boolean isAsync() {
+				return async;
 			}
 
 			@Override

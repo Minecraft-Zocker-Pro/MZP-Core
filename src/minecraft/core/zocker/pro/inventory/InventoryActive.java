@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -445,7 +446,7 @@ public class InventoryActive {
 				if (anvil == null) return;
 
 				if (event.getSlotType() == InventoryType.SlotType.RESULT) {
-					inventoryAnvilZocker.onResult(anvil.getRenameText());
+					CompletableFuture.runAsync(() -> inventoryAnvilZocker.onResult(anvil.getRenameText()));
 				}
 			}
 
@@ -462,6 +463,12 @@ public class InventoryActive {
 			if (consumer == null) return;
 
 			if (!event.getClickedInventory().equals(inventory)) return;
+
+			if (activeEntry.getEntry().isAsync()) {
+				CompletableFuture.runAsync(() -> consumer.accept(event));
+				return;
+			}
+			
 			consumer.accept(event);
 		}
 
@@ -504,7 +511,7 @@ public class InventoryActive {
 								return;
 							}
 
-							if (entry.isUpdateAsync()) inventoryActive.updateAsync(entry);
+							if (entry.isAsync()) inventoryActive.updateAsync(entry);
 							else inventoryActive.update(entry);
 						} catch (Exception e) {
 							e.printStackTrace();

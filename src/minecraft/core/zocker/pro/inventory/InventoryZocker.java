@@ -74,7 +74,7 @@ public abstract class InventoryZocker {
 	 * @return the next arrow
 	 */
 	public InventoryEntry getNextArrow() {
-		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.ARROW.getMaterial()).setName("§6§lNext >>")).build();
+		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.ARROW.getMaterial()).setName("§6§lNext >>")).setAsync(false).build();
 	}
 
 	/**
@@ -83,7 +83,7 @@ public abstract class InventoryZocker {
 	 * @return the previous arrow
 	 */
 	public InventoryEntry getPreviousArrow() {
-		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.ARROW.getMaterial()).setName("§6§l<< Previous")).build();
+		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.ARROW.getMaterial()).setName("§6§l<< Previous")).setAsync(false).build();
 	}
 
 	/**
@@ -101,7 +101,7 @@ public abstract class InventoryZocker {
 	 * @return the close button
 	 */
 	public InventoryEntry getCloseButton() {
-		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.BARRIER.getMaterial()).setName("§6§lClose")).onAllClicks(event -> this.close(Zocker.getZocker(event.getWhoClicked().getUniqueId()))).build();
+		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.BARRIER.getMaterial()).setName("§6§lClose")).onAllClicks(event -> this.close(Zocker.getZocker(event.getWhoClicked().getUniqueId()))).setAsync(false).build();
 	}
 
 	public InventoryEntry getInfoSign() {

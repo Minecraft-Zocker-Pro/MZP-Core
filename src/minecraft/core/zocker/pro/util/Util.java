@@ -55,6 +55,20 @@ public class Util {
 		return number.matches("[0-9]+") && number.length() < 10;
 	}
 
+	public static boolean convertStringToBoolean(String input) {
+		if (input == null) return false;
+
+		if (input.length() == 1) {
+			if (input.equalsIgnoreCase("1")) return true;
+			if (input.equalsIgnoreCase("0")) return false;
+		}
+
+		if (input.equalsIgnoreCase("true")) return true;
+		if (input.equalsIgnoreCase("false")) return false;
+
+		return false;
+	}
+
 	public static double roundDouble(double in) {
 		return ((int) ((in * 100f) + 0.5f)) / 100f;
 	}

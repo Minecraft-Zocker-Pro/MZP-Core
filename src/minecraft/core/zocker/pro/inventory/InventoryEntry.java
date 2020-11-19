@@ -44,11 +44,11 @@ public abstract class InventoryEntry {
 	public abstract ItemStack getItem();
 
 	/**
-	 * Is Update Async boolean.
+	 * Is Async boolean.
 	 *
-	 * @return the update async boolean
+	 * @return the async boolean
 	 */
-	public abstract Boolean isUpdateAsync();
+	public abstract boolean isAsync();
 
 	/**
 	 * Gets item stack supplier.
