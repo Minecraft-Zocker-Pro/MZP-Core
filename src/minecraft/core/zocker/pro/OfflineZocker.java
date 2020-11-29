@@ -67,14 +67,13 @@ public class OfflineZocker extends Zocker {
 			resultSet = StorageManager.getMySQLDatabase().select("player", "name", "uuid", uuid.toString());
 		} else {
 			assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
-			resultSet = StorageManager.getSQLiteDatabase().select("player", "name", "name", uuid.toString());
+			resultSet = StorageManager.getSQLiteDatabase().select("player", "name", "uuid", uuid.toString());
 		}
 
 		try {
 			if (resultSet.next()) {
 				String name = resultSet.getString("name");
 				resultSet.close();
-
 				if (name == null) throw new NullPointerException();
 
 				return name;

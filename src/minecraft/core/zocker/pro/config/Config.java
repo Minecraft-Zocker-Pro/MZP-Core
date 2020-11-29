@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Config {
 
@@ -60,6 +61,10 @@ public class Config {
 		CONFIGS.add(this);
 	}
 
+	public void set(String keyPath, Object value) {
+		this.configuration.set(keyPath, value);
+	}
+
 	public void set(String keyPath, Object value, String version) { // in build 0.0.2
 		if (this.isFirstSetup()) {
 			this.configuration.set(keyPath, value);
@@ -68,9 +73,9 @@ public class Config {
 		}
 
 		Semver semver = new Semver(version);
-		if (semver.isGreaterThan(this.version)) { // config version
+		if (semver.isGreaterThan(Objects.requireNonNull(this.configuration.getString("config.version")))) { // config version
 			this.configuration.set(keyPath, value);
-			this.setVersion(version, true);
+			this.setVersion(version, false);
 		}
 	}
 

@@ -29,7 +29,6 @@ public class Main extends CorePlugin {
 		this.setHelpCommand("core");
 		this.setPluginName("MZP-Core");
 
-
 		if (ServerProject.isServer(ServerProject.CRAFTBUKKIT)) {
 			System.out.println("MZP-Core it's not compatible with CraftBukkit! Use Spigot or similar server software.");
 			onDisable();
@@ -165,5 +164,4 @@ public class Main extends CorePlugin {
 	public static CorePlugin getPlugin() {
 		return PLUGIN;
 	}
-
 }

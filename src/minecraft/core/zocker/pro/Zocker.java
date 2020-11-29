@@ -89,12 +89,6 @@ public class Zocker {
 
 	public static void removeZocker(Zocker zocker) {
 		if (zocker != null) {
-			if (zocker.getPlayer() == null) {
-				System.out.println("Removed offlineZocker : " + zocker.getUUID());
-			} else {
-				System.out.println("Removed zocker : " + zocker.getPlayer().getName());
-			}
-
 			ZOCKERS.entrySet().removeIf(item -> item.getValue().equals(zocker));
 		}
 	}
@@ -152,44 +146,6 @@ public class Zocker {
 		});
 	}
 
-	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String uniqueKey, Object uniqueValue) {
-		if (table == null || columns == null) return null;
-
-		return CompletableFuture.supplyAsync(() -> {
-			try {
-				ResultSet result;
-				if (StorageManager.isMySQL()) {
-					assert StorageManager.getMySQLDatabase() != null : "Select command failed";
-					result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
-				} else {
-					assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
-					result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
-				}
-				if (result == null) return null;
-
-				if (result.next()) {
-					Map<String, String> hmsetData = new HashMap<>();
-					for (String column : columns) {
-						String value = result.getString(column);
-						if (value == null) continue;
-
-
-						hmsetData.put(column, value);
-					}
-
-					result.close();
-
-					return hmsetData;
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-				return null;
-			}
-
-			return null;
-		});
-	}
-
 	// endregion
 
 	// region GetList
@@ -236,6 +192,47 @@ public class Zocker {
 
 	// region GetComplex
 
+	public CompletableFuture<Map<String, String>> get(String table, String[] columns) {
+		return this.get(table, columns, "uuid", this.uuid);
+	}
+
+	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String uniqueKey, Object uniqueValue) {
+		if (table == null || columns == null) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				ResultSet result;
+				if (StorageManager.isMySQL()) {
+					assert StorageManager.getMySQLDatabase() != null : "Select command failed";
+					result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+				} else {
+					assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
+					result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+				}
+				if (result == null) return null;
+
+				if (result.next()) {
+					Map<String, String> hmsetData = new HashMap<>();
+					for (String column : columns) {
+						String value = result.getString(column);
+						if (value == null) continue;
+
+						hmsetData.put(column, value);
+					}
+
+					result.close();
+
+					return hmsetData;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return null;
+			}
+
+			return null;
+		});
+	}
+
 	// endregion
 
 	// region Set
@@ -261,6 +258,10 @@ public class Zocker {
 	// endregion
 
 	// region SetComplex
+
+	public CompletableFuture<Boolean> set(String table, String[] columns, Object[] values) {
+		return this.set(table, columns, values, "uuid", this.uuid);
+	}
 
 	public CompletableFuture<Boolean> set(String table, String[] columns, Object[] values, String uniqueKey, Object uniqueValue) {
 		if (table == null || columns.length != values.length || uniqueKey == null || uniqueValue == null) return null;

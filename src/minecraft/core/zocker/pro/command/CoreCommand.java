@@ -3,9 +3,11 @@ package minecraft.core.zocker.pro.command;
 import minecraft.core.zocker.pro.CorePlugin;
 import minecraft.core.zocker.pro.Main;
 import minecraft.core.zocker.pro.Zocker;
+import minecraft.core.zocker.pro.event.CorePluginReloadEvent;
 import minecraft.core.zocker.pro.inventory.InventoryEntry;
 import minecraft.core.zocker.pro.inventory.InventoryZocker;
 import minecraft.core.zocker.pro.inventory.builder.InventoryEntryBuilder;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
@@ -119,7 +121,11 @@ public class CoreCommand extends Command {
 
 				itemMeta.setDisplayName("§6§l" + corePlugin.getName() + " §3v" + pluginDescriptionFile.getVersion());
 				lore.add("§3Description");
-				lore.add("§7" + getDescription());
+				if (getDescription() == null) {
+					lore.add("");
+				} else {
+					lore.add("§7" + getDescription());
+				}
 
 				if (pluginDescriptionFile.getAuthors() != null) {
 					StringBuilder stringBuilder = new StringBuilder();
@@ -155,12 +161,12 @@ public class CoreCommand extends Command {
 				itemMeta.setLore(lore);
 				itemStack.setItemMeta(itemMeta);
 
-
 				this.addItem(new InventoryEntryBuilder()
 					.setItem(itemStack)
 					.onRightClick(event -> {
 						long start = System.currentTimeMillis();
 						corePlugin.reload();
+						Bukkit.getPluginManager().callEvent(new CorePluginReloadEvent(corePlugin));
 						event.getWhoClicked().sendMessage(Main.CORE_MESSAGE.getString("message.prefix") + "§6" + corePlugin.getName() + " §3has been reloaded §7[took " + (System.currentTimeMillis() - start) + "ms]");
 						zocker.getPlayer().closeInventory();
 					})
@@ -175,6 +181,5 @@ public class CoreCommand extends Command {
 				slot++;
 			}
 		}
-
 	}
 }
