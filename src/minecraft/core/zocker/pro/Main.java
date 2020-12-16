@@ -4,6 +4,7 @@ import minecraft.core.zocker.pro.command.CoreCommand;
 import minecraft.core.zocker.pro.compatibility.CompatibleMaterial;
 import minecraft.core.zocker.pro.compatibility.ServerProject;
 import minecraft.core.zocker.pro.config.Config;
+import minecraft.core.zocker.pro.event.PlayerVoidFallEvent;
 import minecraft.core.zocker.pro.inventory.InventoryActive;
 import minecraft.core.zocker.pro.listener.PlayerJoinListener;
 import minecraft.core.zocker.pro.listener.PlayerQuitListener;
@@ -11,6 +12,7 @@ import minecraft.core.zocker.pro.storage.StorageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class Main extends CorePlugin {
 
@@ -41,6 +43,7 @@ public class Main extends CorePlugin {
 
 		this.registerCommand();
 		this.registerListener();
+		this.handleVoidFall();
 
 		// Reinitialize
 		for (Player player : Bukkit.getOnlinePlayers()) {
@@ -95,8 +98,11 @@ public class Main extends CorePlugin {
 		CORE_CONFIG = new Config("core.yml", this.getPluginName());
 
 		CORE_CONFIG.set("core.server.name", "my-server", "0.0.2");
+		CORE_CONFIG.set("core.event.void.enabled", false, "0.0.9");
+		CORE_CONFIG.set("core.event.void.high", 0, "0.0.9");
+		CORE_CONFIG.set("core.event.void.delay", 20, "0.0.9");
 
-		CORE_CONFIG.save();
+		CORE_CONFIG.setVersion("0.0.9", true);
 
 		// Storage
 		CORE_STORAGE = new Config("storage.yml", this.getPluginName());
@@ -159,6 +165,27 @@ public class Main extends CorePlugin {
 		});
 
 		InventoryActive.getActiveGUIs().clear();
+
+		this.handleVoidFall();
+	}
+
+	private void handleVoidFall() {
+		if (!CORE_CONFIG.getBool("core.event.void.enabled")) return;
+
+		float yPosition = CORE_CONFIG.getInt("core.event.void.high");
+
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				if (Bukkit.getOnlinePlayers().size() == 0) return;
+
+				Bukkit.getOnlinePlayers().forEach(player -> {
+					if (player.getLocation().getY() <= yPosition) {
+						Bukkit.getPluginManager().callEvent(new PlayerVoidFallEvent(player));
+					}
+				});
+			}
+		}.runTaskTimerAsynchronously(this, 0, CORE_CONFIG.getInt("core.event.void.delay"));
 	}
 
 	public static CorePlugin getPlugin() {

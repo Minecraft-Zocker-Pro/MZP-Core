@@ -97,19 +97,19 @@ public class ItemBuilder {
 	 * @return the unbreakable
 	 */
 	public ItemBuilder setUnbreakable(boolean unbreakable) {
-		if(ServerVersion.isServerVersionAtLeast(ServerVersion.V1_9)) {
+		if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_9)) {
 			this.itemMeta.setUnbreakable(unbreakable);
 			return this;
 		}
-		
-		if(ServerProject.isServer(ServerProject.CRAFTBUKKIT)) {
+
+		if (ServerProject.isServer(ServerProject.CRAFTBUKKIT)) {
 			// TODO error message
 			return this;
 		}
-		
+
 		// TODO reflection for the 1.8 version
 //		this.itemMeta.spigot().setUnbreakable(unbreakable);
-		
+
 		return this;
 	}
 
@@ -157,16 +157,6 @@ public class ItemBuilder {
 	public ItemBuilder setAmount(int amount) {
 		this.itemStack.setAmount(amount);
 		return this;
-	}
-
-	/**
-	 * Amount item builder.
-	 *
-	 * @param amount the amount
-	 * @return the item builder
-	 */
-	public ItemBuilder amount(int amount) {
-		return this.setAmount(amount);
 	}
 
 	/**
@@ -352,7 +342,7 @@ public class ItemBuilder {
 	 */
 	public ItemBuilder setEggType(EntityType type) {
 		if (ServerVersion.isServerVersionAtOrBelow(ServerVersion.V1_8)) {
-			if (this.itemStack.getType() == Material.valueOf("MONSTER_EGG")) {
+			if (this.itemStack.getType() == CompatibleMaterial.valueOf("MONSTER_EGG").getMaterial()) {
 				((SpawnEgg) this.itemMeta).setSpawnedType(type);
 				return this;
 			}
