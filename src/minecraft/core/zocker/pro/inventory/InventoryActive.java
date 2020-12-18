@@ -272,7 +272,8 @@ public class InventoryActive {
 			}
 		}.runTask(Main.getPlugin());
 
-		activeGUIs.putIfAbsent(inventory, this);
+		activeGUIs.put(inventory, this);
+		inventoryZocker.onOpen(this, this.getInventory(), getZocker().getPlayer());
 
 		if (this.inventoryZocker instanceof InventoryUpdateZocker) {
 			InventoryUpdateZocker inventoryUpdateZocker = (InventoryUpdateZocker) this.inventoryZocker;
@@ -286,7 +287,7 @@ public class InventoryActive {
 						} else {
 							inventoryUpdateZocker.onUpdate();
 							inventoryUpdateZocker.update(zocker);
-							inventoryUpdateZocker.getEntries().clear();
+//							inventoryUpdateZocker.getEntries().clear();
 						}
 
 					} catch (Exception e) {
@@ -369,6 +370,7 @@ public class InventoryActive {
 		return activeGUIs;
 	}
 
+	@Deprecated
 	public static HashMap<Inventory, InventoryActive> getActiveGUIs() {
 		return activeGUIs;
 	}
@@ -394,6 +396,7 @@ public class InventoryActive {
 
 					active.inventoryZocker.close(zocker);
 
+//					@Deprecated
 					new BukkitRunnable() {
 						@Override
 						public void run() {
@@ -409,18 +412,6 @@ public class InventoryActive {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
-
-		/**
-		 * On inventory open event.
-		 *
-		 * @param event the event
-		 */
-		@EventHandler(priority = EventPriority.LOW)
-		private void onInventoryOpenEvent(InventoryOpenEvent event) {
-			InventoryActive active = InventoryActive.valueOf(event.getInventory());
-			if (active == null) return;
-			active.inventoryZocker.onOpen(active.inventoryZocker, event);
 		}
 
 		/**
@@ -449,6 +440,9 @@ public class InventoryActive {
 					CompletableFuture.runAsync(() -> inventoryAnvilZocker.onResult(anvil.getRenameText()));
 				}
 			}
+			
+			// Trigger onClick event
+			CompletableFuture.runAsync(() -> active.getInventoryZocker().onClick(active.getInventoryZocker(), event));
 
 			GUIActiveEntry activeEntry = active.getActiveEntry(event.getSlot());
 			if (activeEntry == null) return;
@@ -468,7 +462,7 @@ public class InventoryActive {
 				CompletableFuture.runAsync(() -> consumer.accept(event));
 				return;
 			}
-			
+
 			consumer.accept(event);
 		}
 

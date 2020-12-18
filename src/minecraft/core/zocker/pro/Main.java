@@ -138,7 +138,7 @@ public class Main extends CorePlugin {
 		CORE_MESSAGE.set("message.command.sub.wrong", "&3Wrong sub command for this command!", "0.0.2");
 		CORE_MESSAGE.set("message.command.arg.length", "&3Too many or to less arguments for this command!", "0.0.3");
 
-		CORE_MESSAGE.save();
+		CORE_MESSAGE.setVersion("0.0.9", true);
 	}
 
 	@Override

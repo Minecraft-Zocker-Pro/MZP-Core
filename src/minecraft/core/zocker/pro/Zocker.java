@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class Zocker {
 
@@ -233,6 +234,49 @@ public class Zocker {
 		});
 	}
 
+	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String[] uniqueKeys, Object[] uniqueValues) {
+		return get(table, columns, uniqueKeys, uniqueValues, this.getUUIDString());
+	}
+
+	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String[] uniqueKeys, Object[] uniqueValues, Object uniqueValue) {
+		if (table == null || columns == null || uniqueKeys.length != uniqueValues.length || uniqueValue == null) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				ResultSet result;
+				if (StorageManager.isMySQL()) {
+					assert StorageManager.getMySQLDatabase() != null : "Select command failed";
+					result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKeys, uniqueValues);
+				} else {
+					assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
+					result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKeys, uniqueValues);
+				}
+				
+				if (result == null) return null;
+
+				if (result.next()) {
+					Map<String, String> hmsetData = new HashMap<>();
+					for (String column : columns) {
+						String value = result.getString(column);
+						if (value == null) continue;
+
+						hmsetData.put(column, value);
+					}
+
+					result.close();
+
+					return hmsetData;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return null;
+			}
+
+			return null;
+		});
+	}
+
+
 	// endregion
 
 	// region Set
@@ -273,6 +317,42 @@ public class Zocker {
 			} else {
 				assert StorageManager.getSQLiteDatabase() != null : "Update command failed.";
 				return StorageManager.getSQLiteDatabase().update(table, columns, values, uniqueKey, uniqueValue.toString());
+			}
+		});
+	}
+
+	public CompletableFuture<Boolean> set(String table, String column, Object value, String[] uniqueKeys, Object[] uniqueValues) {
+		return this.set(table, column, value, uniqueKeys, uniqueValues, this.getUUIDString());
+	}
+
+	public CompletableFuture<Boolean> set(String table, String column, Object value, String[] uniqueKeys, Object[] uniqueValues, Object uniqueValue) {
+		if (table == null || column == null || value == null || uniqueKeys.length != uniqueValues.length) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
+				return StorageManager.getMySQLDatabase().update(table, column, value, uniqueKeys, uniqueValues);
+			} else {
+				assert StorageManager.getSQLiteDatabase() != null : "Update command failed.";
+				return StorageManager.getSQLiteDatabase().update(table, column, value, uniqueKeys, uniqueValues);
+			}
+		});
+	}
+
+	public CompletableFuture<Boolean> set(String table, String[] columns, Object[] values, String[] uniqueKeys, Object[] uniqueValues) {
+		return this.set(table, columns, values, uniqueKeys, uniqueValues, this.getUUIDString());
+	}
+
+	public CompletableFuture<Boolean> set(String table, String[] columns, Object[] values, String[] uniqueKeys, Object[] uniqueValues, Object uniqueValue) {
+		if (table == null || columns.length != values.length || uniqueKeys.length != uniqueValues.length) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
+				return StorageManager.getMySQLDatabase().update(table, columns, values, uniqueKeys, uniqueValues);
+			} else {
+				assert StorageManager.getSQLiteDatabase() != null : "Update command failed.";
+				return StorageManager.getSQLiteDatabase().update(table, columns, values, uniqueKeys, uniqueValues);
 			}
 		});
 	}
@@ -454,6 +534,122 @@ public class Zocker {
 
 			assert StorageManager.getSQLiteDatabase() != null : "Delete command failed.";
 			return StorageManager.getSQLiteDatabase().deleteConditional(table, primaryKeys, primaryValues);
+		});
+	}
+
+	// endregion
+
+	// region Placement
+
+	public CompletableFuture<Integer> getPlacement(String table, String column) {
+		return getPlacement(table, column, "uuid", this.getUUIDString());
+	}
+
+	public CompletableFuture<Integer> getPlacement(String table, String column, String uniqueKey, Object uniqueValue) {
+		if (table == null || column == null || uniqueKey == null || uniqueValue == null) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Placement player command failed.";
+				return StorageManager.getMySQLDatabase().placement(table, column, uniqueKey, uniqueValue.toString());
+			} else {
+				assert StorageManager.getSQLiteDatabase() != null : "Placement player command failed.";
+				return StorageManager.getSQLiteDatabase().placement(table, column, uniqueKey, uniqueValue.toString());
+			}
+		});
+	}
+
+	public CompletableFuture<Integer> getPlacement(String table, String column, String uniqueKey, Object uniqueValue, String whereKey, Object whereValue) {
+		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Placement player command failed.";
+				return StorageManager.getMySQLDatabase().placement(table, column, uniqueKey, uniqueValue.toString(), whereKey, whereValue.toString());
+			} else {
+				assert StorageManager.getSQLiteDatabase() != null : "Placement player command failed.";
+				return StorageManager.getSQLiteDatabase().placement(table, column, uniqueKey, uniqueValue.toString(), whereKey, whereValue.toString());
+			}
+		});
+	}
+
+	public CompletableFuture<Map<String, Integer>> getPlacement(String table, String column, int topCount) {
+		return getPlacement(table, column, "name", topCount);
+	}
+
+	public CompletableFuture<Map<String, Integer>> getPlacement(String table, String column, String uniqueKey, int topCount) {
+		return getPlacement(table, column, uniqueKey, column, topCount);
+	}
+
+	public CompletableFuture<Map<String, Integer>> getPlacement(String table, String column, String uniqueKey, String orderBy, int topCount) {
+		return getPlacement(table, column, uniqueKey, orderBy, "DESC", topCount);
+	}
+
+	public CompletableFuture<Map<String, Integer>> getPlacement(String table, String column, String uniqueKey, String orderBy, String orderByType, int topCount) {
+		if (table == null || column == null || uniqueKey == null || orderBy == null || topCount == 0) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			ResultSet resultSet;
+
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Placement command failed.";
+				resultSet = StorageManager.getMySQLDatabase().placement(table, column, uniqueKey, orderBy, orderByType, topCount);
+			} else {
+				assert StorageManager.getSQLiteDatabase() != null : "Placement command failed.";
+				resultSet = StorageManager.getSQLiteDatabase().placement(table, column, uniqueKey, orderBy, orderByType, topCount);
+			}
+
+			try {
+				HashMap<String, Integer> placements = new HashMap<>();
+				while (resultSet.next()) {
+					String playerName = resultSet.getString(uniqueKey);
+					int rank = resultSet.getInt(column);
+					placements.put(playerName, rank);
+				}
+
+				return placements.entrySet().stream()
+					.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+					.limit(topCount)
+					.collect(Collectors.toMap(
+						Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			return null;
+		});
+	}
+
+	public CompletableFuture<Map<String, Integer>> getPlacement(String table, String column, String uniqueKey, String orderBy, String orderByType, String whereKey, String whereValue, int topCount) {
+		if (table == null || column == null || uniqueKey == null || orderBy == null || orderByType == null || whereKey == null || whereValue == null || topCount == 0) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			ResultSet resultSet;
+
+			if (StorageManager.isMySQL()) {
+				assert StorageManager.getMySQLDatabase() != null : "Placement command failed.";
+				resultSet = StorageManager.getMySQLDatabase().placement(table, column, uniqueKey, orderBy, orderByType, whereKey, whereValue, topCount);
+			} else {
+				assert StorageManager.getSQLiteDatabase() != null : "Placement command failed.";
+				resultSet = StorageManager.getSQLiteDatabase().placement(table, column, uniqueKey, orderBy, orderByType, whereKey, whereValue, topCount);
+			}
+
+			try {
+				HashMap<String, Integer> placements = new HashMap<>();
+				while (resultSet.next()) {
+					String playerName = resultSet.getString(uniqueKey);
+					int rank = resultSet.getInt(column);
+					placements.put(playerName, rank);
+				}
+
+				return placements.entrySet().stream()
+					.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+					.limit(topCount)
+					.collect(Collectors.toMap(
+						Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			return null;
 		});
 	}
 

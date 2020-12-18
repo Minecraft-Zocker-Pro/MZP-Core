@@ -74,15 +74,6 @@ public class CoreCommand extends Command {
 		}
 
 		@Override
-		public void onOpen(InventoryZocker zockerInventory, InventoryOpenEvent event) {
-		}
-
-		@Override
-		public void onClose(InventoryZocker zockerInventory, InventoryCloseEvent event) {
-
-		}
-
-		@Override
 		public InventoryEntry getNextArrow() {
 			return null;
 		}

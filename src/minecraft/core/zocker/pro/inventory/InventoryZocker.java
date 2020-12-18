@@ -1,5 +1,6 @@
 package minecraft.core.zocker.pro.inventory;
 
+import minecraft.core.zocker.pro.Main;
 import minecraft.core.zocker.pro.Zocker;
 import minecraft.core.zocker.pro.compatibility.CompatibleMaterial;
 import minecraft.core.zocker.pro.inventory.builder.InventoryEntryBuilder;
@@ -10,11 +11,11 @@ import minecraft.core.zocker.pro.nms.api.anvil.AnvilCore;
 import minecraft.core.zocker.pro.nms.api.anvil.CustomAnvil;
 import minecraft.core.zocker.pro.util.Validator;
 import org.bukkit.Bukkit;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
@@ -46,6 +47,14 @@ public abstract class InventoryZocker {
 	 */
 	public abstract Integer getSize();
 
+	/**
+	 * On open.
+	 *
+	 * @param inventoryZocker the inventoryZocker
+	 * @param inventory       the inventory
+	 */
+	public void onOpen(InventoryActive inventoryZocker, Inventory inventory, Player player) {
+	}
 
 	/**
 	 * On open.
@@ -53,7 +62,18 @@ public abstract class InventoryZocker {
 	 * @param inventoryZocker the inventoryZocker
 	 * @param event           the event
 	 */
-	public abstract void onOpen(InventoryZocker inventoryZocker, InventoryOpenEvent event);
+	@Deprecated
+	public void onOpen(InventoryZocker inventoryZocker, InventoryOpenEvent event) {
+	}
+
+	/**
+	 * On close.
+	 *
+	 * @param inventoryZocker the inventoryZocker
+	 * @param inventory       the inventory
+	 */
+	public void onClose(InventoryZocker inventoryZocker, Inventory inventory, Player player) {
+	}
 
 	/**
 	 * On close.
@@ -61,7 +81,13 @@ public abstract class InventoryZocker {
 	 * @param inventoryZocker the inventoryZocker
 	 * @param event           the event
 	 */
-	public abstract void onClose(InventoryZocker inventoryZocker, InventoryCloseEvent event);
+	@Deprecated
+	public void onClose(InventoryZocker inventoryZocker, InventoryCloseEvent event) {
+	}
+
+	public void onClick(InventoryZocker inventoryZocker, InventoryClickEvent event) {
+
+	}
 
 	/**
 	 * Sets inventory.
@@ -179,6 +205,13 @@ public abstract class InventoryZocker {
 		active.stopUpdating();
 		active.deleteObject();
 		zocker.getPlayer().closeInventory();
+
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				active.getInventoryZocker().onClose(active.getInventoryZocker(), active.getInventory(), active.getZocker().getPlayer());
+			}
+		}.runTaskAsynchronously(Main.getPlugin());
 	}
 
 	/**

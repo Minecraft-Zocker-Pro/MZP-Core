@@ -152,17 +152,17 @@ public abstract class DatabaseHelper {
 		} else return null;
 	}
 
-	public ResultSet selectConditional(String table, String column, String[] primaryKeys, Object[] primaryValues) {
-		if (table == null || column == null || primaryKeys.length != primaryValues.length) return null;
+	public ResultSet select(String table, String column, String[] uniqueKeys, Object[] uniqueValues) {
+		if (table == null || column == null || uniqueKeys.length != uniqueValues.length) return null;
 
 		StringBuilder selectString = new StringBuilder("SELECT");
 
 		selectString.append(" ").append(column);
 		selectString.append(" FROM `").append(table).append("` WHERE ");
 
-		for (String primaryKey : primaryKeys) {
+		for (String primaryKey : uniqueKeys) {
 			selectString.append(primaryKey).append(" = ?");
-			if (!primaryKey.equals(primaryKeys[primaryKeys.length - 1])) selectString.append(" AND ");
+			if (!primaryKey.equals(uniqueKeys[uniqueKeys.length - 1])) selectString.append(" AND ");
 		}
 
 		try {
@@ -184,8 +184,8 @@ public abstract class DatabaseHelper {
 				selectStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(selectString.toString());
 			}
 
-			for (int i = 1; i <= primaryValues.length; i++) {
-				selectStatement.setString(i, primaryValues[i - 1].toString());
+			for (int i = 1; i <= uniqueValues.length; i++) {
+				selectStatement.setString(i, uniqueValues[i - 1].toString());
 			}
 
 			return selectStatement.executeQuery();
@@ -195,8 +195,8 @@ public abstract class DatabaseHelper {
 		}
 	}
 
-	public ResultSet selectConditional(String table, String[] columns, String[] primaryKeys, Object[] primaryValues) {
-		if (table == null || columns == null || primaryKeys.length != primaryValues.length) return null;
+	public ResultSet select(String table, String[] columns, String[] uniqueKeys, Object[] uniqueValues) {
+		if (table == null || columns == null || uniqueKeys.length != uniqueValues.length) return null;
 
 		StringBuilder selectString = new StringBuilder("SELECT");
 
@@ -209,9 +209,9 @@ public abstract class DatabaseHelper {
 
 		selectString.append(" FROM `").append(table).append("` WHERE ");
 
-		for (String primaryKey : primaryKeys) {
+		for (String primaryKey : uniqueKeys) {
 			selectString.append(primaryKey).append(" = ?");
-			if (!primaryKey.equals(primaryKeys[primaryKeys.length - 1])) selectString.append(" AND ");
+			if (!primaryKey.equals(uniqueKeys[uniqueKeys.length - 1])) selectString.append(" AND ");
 		}
 
 		try {
@@ -234,8 +234,8 @@ public abstract class DatabaseHelper {
 				selectStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(selectString.toString());
 			}
 
-			for (int i = 1; i <= primaryValues.length; i++) {
-				selectStatement.setString(i, primaryValues[i - 1].toString());
+			for (int i = 1; i <= uniqueValues.length; i++) {
+				selectStatement.setString(i, uniqueValues[i - 1].toString());
 			}
 
 			return selectStatement.executeQuery();
@@ -346,7 +346,7 @@ public abstract class DatabaseHelper {
 
 	}
 
-	public boolean updateConditional(String table, String column, Object value, String[] whereKeys, Object[] whereValues) {
+	public boolean update(String table, String column, Object value, String[] whereKeys, Object[] whereValues) {
 		if (((table != null)) && (column != null) && (value != null) && (whereKeys != null) && (whereValues != null)) {
 			int i = 0;
 			String updateString = "UPDATE `" + table + "` SET";
@@ -400,7 +400,7 @@ public abstract class DatabaseHelper {
 
 	}
 
-	public boolean updateConditional(String table, String[] columns, Object[] values, String[] whereKeys, Object[] whereValues) {
+	public boolean update(String table, String[] columns, Object[] values, String[] whereKeys, Object[] whereValues) {
 		if ((table != null) && (columns.length > 0) && (columns.length == values.length) && (whereKeys != null) && (whereValues != null)) {
 			StringBuilder updateString = new StringBuilder("UPDATE `" + table + "` SET");
 			for (String key : columns) {
@@ -617,4 +617,172 @@ public abstract class DatabaseHelper {
 
 	// endregion
 
+	// region Placement
+
+	/**
+	 * Get the placement for the player
+	 *
+	 * @param table
+	 * @param column
+	 * @param identifier
+	 * @param identifierValue
+	 * @return
+	 */
+	public int placement(String table, String column, String identifier, String identifierValue) {
+		if (table == null || column == null || identifier == null || identifierValue == null) return -1;
+
+		String subselect = "(SELECT " + column + " FROM " + table + " WHERE " + identifier + " = ?)";
+		String countString = "SELECT COUNT(*) FROM " + table + " WHERE " + column + " >= " + subselect;
+
+		try {
+			PreparedStatement countStatement;
+
+			if (StorageManager.isMySQL()) {
+				if (StorageManager.getMySQLDatabase() == null) {
+					// TODO error
+					return -1;
+				}
+
+				countStatement = StorageManager.getMySQLDatabase().getConnection().prepareStatement(countString);
+			} else {
+				if (StorageManager.getSQLiteDatabase() == null) {
+					// TODO error
+					return -1;
+				}
+
+				countStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(countString);
+			}
+
+			countStatement.setString(1, identifierValue);
+			ResultSet result = countStatement.executeQuery();
+
+			if (result.next()) {
+				return result.getInt(1);
+			} else {
+				return -1;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return -1;
+	}
+
+	public int placement(String table, String column, String uniqueKey, String uniqueValue, String whereKey, String whereValue) {
+		if (table == null || column == null || uniqueKey == null || uniqueValue == null || whereKey == null || whereValue == null) return -1;
+		String subselect = "(SELECT CAST(" + column + " as int) FROM " + table + " WHERE " + uniqueKey + " = '" + uniqueValue + "' AND " + whereKey + " = '" + whereValue + "')";
+		String countString = "SELECT COUNT(*) FROM " + table + " WHERE " + whereKey + " = '" + whereValue + "' AND " + column + " >= " + subselect;
+
+		try {
+			PreparedStatement countStatement;
+
+			if (StorageManager.isMySQL()) {
+				if (StorageManager.getMySQLDatabase() == null) {
+					// TODO error
+					return -1;
+				}
+
+				countStatement = StorageManager.getMySQLDatabase().getConnection().prepareStatement(countString);
+			} else {
+				if (StorageManager.getSQLiteDatabase() == null) {
+					// TODO error
+					return -1;
+				}
+
+				countStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(countString);
+			}
+
+			ResultSet result = countStatement.executeQuery();
+
+			if (result.next()) {
+				return result.getInt(1);
+			} else {
+				return -1;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return -1;
+	}
+
+	public ResultSet placement(String table, String column, String uniqueKey, int topCount) {
+		return placement(table, column, uniqueKey, column, topCount);
+	}
+
+	public ResultSet placement(String table, String column, String uniqueKey, String orderBy, int topCount) {
+		return placement(table, column, uniqueKey, orderBy, "desc", topCount);
+	}
+
+	public ResultSet placement(String table, String column, String uniqueKey, String orderBy, String orderByType, int topCount) {
+		if (table == null || column == null || uniqueKey == null || orderBy == null || orderByType == null || topCount == 0) return null;
+
+		if (!(orderByType.equalsIgnoreCase("asc") || orderByType.equalsIgnoreCase("desc"))) {
+			orderByType = "DESC";
+		}
+
+		String placementString = "SELECT " + uniqueKey + ", " + column + " FROM " + table + " ORDER BY " + orderBy + " " + orderByType + " LIMIT " + topCount;
+
+		try {
+			PreparedStatement placementStatement;
+
+			if (StorageManager.isMySQL()) {
+				if (StorageManager.getMySQLDatabase() == null) {
+					// TODO error
+					return null;
+				}
+
+				placementStatement = StorageManager.getMySQLDatabase().getConnection().prepareStatement(placementString.toString());
+			} else {
+				if (StorageManager.getSQLiteDatabase() == null) {
+					// TODO error
+					return null;
+				}
+
+				placementStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(placementString.toString());
+			}
+
+			return placementStatement.executeQuery();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public ResultSet placement(String table, String column, String uniqueKey, String orderBy, String orderByType, String whereKey, String whereValue, int topCount) {
+		if (table == null || column == null || uniqueKey == null || orderBy == null || orderByType == null || whereKey == null || whereValue == null || topCount == 0) return null;
+
+		if (!(orderByType.equalsIgnoreCase("asc") || orderByType.equalsIgnoreCase("desc"))) {
+			orderByType = "DESC";
+		}
+
+		String placementString = "SELECT " + uniqueKey + ", " + column + " FROM " + table + " WHERE " + whereKey + " = '" + whereValue + "' ORDER BY " + orderBy + " " + orderByType + " LIMIT " + topCount;
+
+		try {
+			PreparedStatement placementStatement;
+
+			if (StorageManager.isMySQL()) {
+				if (StorageManager.getMySQLDatabase() == null) {
+					// TODO error
+					return null;
+				}
+
+				placementStatement = StorageManager.getMySQLDatabase().getConnection().prepareStatement(placementString.toString());
+			} else {
+				if (StorageManager.getSQLiteDatabase() == null) {
+					// TODO error
+					return null;
+				}
+
+				placementStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(placementString.toString());
+			}
+
+			return placementStatement.executeQuery();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	// endregion
 }
