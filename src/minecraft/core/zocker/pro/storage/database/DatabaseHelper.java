@@ -757,7 +757,6 @@ public abstract class DatabaseHelper {
 		}
 
 		String placementString = "SELECT " + uniqueKey + ", " + column + " FROM " + table + " WHERE " + whereKey + " = '" + whereValue + "' ORDER BY " + orderBy + " " + orderByType + " LIMIT " + topCount;
-
 		try {
 			PreparedStatement placementStatement;
 

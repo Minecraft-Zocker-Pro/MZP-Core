@@ -428,7 +428,9 @@ public class InventoryActive {
 			if (active == null) return;
 
 			if (player.getOpenInventory().getTopInventory().equals(inventory)) {
-				event.setCancelled(true);
+				if (!active.inventoryZocker.isMovable()) {
+					event.setCancelled(true);
+				}
 			}
 
 			if (active.getInventoryZocker() instanceof InventoryAnvilZocker) {
@@ -440,7 +442,7 @@ public class InventoryActive {
 					CompletableFuture.runAsync(() -> inventoryAnvilZocker.onResult(anvil.getRenameText()));
 				}
 			}
-			
+
 			// Trigger onClick event
 			CompletableFuture.runAsync(() -> active.getInventoryZocker().onClick(active.getInventoryZocker(), event));
 

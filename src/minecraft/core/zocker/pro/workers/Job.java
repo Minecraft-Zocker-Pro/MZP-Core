@@ -123,7 +123,18 @@ public class Job {
 	 * @return the boolean
 	 */
 	public boolean isCancelled() {
-		return future.isCancelled();
+		boolean isScheduled = timeUnit != null;
+		boolean isRepeated = timeInterval > 0;
+
+		if (!isScheduled && !isRepeated) {
+			return this.future.isCancelled();
+		}
+
+		if (isScheduled && !isRepeated) {
+			return scheduledFuture.isCancelled();
+		}
+
+		return scheduledFuture.isCancelled();
 	}
 
 	/**

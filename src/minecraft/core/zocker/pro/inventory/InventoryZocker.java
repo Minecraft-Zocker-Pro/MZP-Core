@@ -89,6 +89,10 @@ public abstract class InventoryZocker {
 
 	}
 
+	public boolean isMovable() {
+		return false;
+	}
+	
 	/**
 	 * Sets inventory.
 	 */

@@ -1,8 +1,13 @@
 package minecraft.core.zocker.pro;
 
 import minecraft.core.zocker.pro.storage.StorageManager;
+import minecraft.core.zocker.pro.storage.cache.memory.MemoryCacheEntry;
+import minecraft.core.zocker.pro.storage.cache.memory.MemoryCacheEntryBuilder;
+import minecraft.core.zocker.pro.storage.cache.memory.MemoryCacheManager;
+import minecraft.core.zocker.pro.storage.cache.redis.RedisCacheManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import redis.clients.jedis.ShardedJedis;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class Zocker {
@@ -117,33 +123,83 @@ public class Zocker {
 		if (table == null || column == null || uniqueKey == null) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			// Cache
 			if (StorageManager.isRedis()) {
-				return null;
-			} else {
-				try {
-					ResultSet result;
-					if (StorageManager.isMySQL()) {
-						assert StorageManager.getMySQLDatabase() != null : "Select command failed";
-						result = StorageManager.getMySQLDatabase().select(table, column, uniqueKey, uniqueValue.toString());
-					} else {
-						assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
-						result = StorageManager.getSQLiteDatabase().select(table, column, uniqueKey, uniqueValue.toString());
-					}
-					if (result == null) return null;
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				ShardedJedis redis = redisCacheManager.getResource();
+				String redisData = redis.hget(uniqueValue.toString() + "-" + table, column);
 
-					if (result.next()) {
-						String value = result.getString(column);
+				redis.close();
 
-						result.close();
-						return value;
-					}
-				} catch (SQLException e) {
-					e.printStackTrace();
-					return null;
+				if (redisData != null) {
+					System.out.println("return redis cache: " + redisData);
+					return redisData;
 				}
+			} else if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
 
+				if (cacheEntry != null) {
+					if (!cacheEntry.getColumns().isEmpty()) {
+						for (String key : cacheEntry.getColumns().keySet()) {
+							if (key.equalsIgnoreCase(column)) {
+								Object value = cacheEntry.getColumns().get(column);
+								if (value != null) return value.toString();
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			// Database
+			try {
+				ResultSet result;
+				if (StorageManager.isMySQL()) {
+					assert StorageManager.getMySQLDatabase() != null : "Select command failed";
+					result = StorageManager.getMySQLDatabase().select(table, column, uniqueKey, uniqueValue.toString());
+				} else {
+					assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
+					result = StorageManager.getSQLiteDatabase().select(table, column, uniqueKey, uniqueValue.toString());
+				}
+				if (result == null) return null;
+
+				if (result.next()) {
+					String value = result.getString(column);
+					result.close();
+
+					if (StorageManager.isRedis()) {
+						RedisCacheManager redisCacheManager = new RedisCacheManager();
+						ShardedJedis redis = redisCacheManager.getResource();
+
+						redis.hset(uniqueValue.toString() + "-" + table, column, value);
+
+						redis.close();
+						return value;
+					} else if (StorageManager.isMemory()) {
+						MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+						MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+
+						if (cacheEntry == null) {
+							cacheEntry = new MemoryCacheEntryBuilder()
+								.setUniqueKey(uniqueValue.toString() + "-" + table)
+								.setExpireDuration(Main.CORE_STORAGE.getInt("storage.cache.memory.expiration.duration"), TimeUnit.SECONDS)
+								.addColumn(column, value).build();
+						} else {
+							cacheEntry.addColumn(column, value);
+						}
+
+						memoryCacheManager.add(cacheEntry);
+					}
+
+					return value;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
 				return null;
 			}
+
+			return null;
 		});
 	}
 
@@ -155,25 +211,26 @@ public class Zocker {
 		return this.getList(table, primaryKeys, "uuid", this.uuid);
 	}
 
-	public CompletableFuture<List<String>> getList(String table, String[] primaryKeys, String uniqueKey, Object uniqueValue) {
-		if (table == null || primaryKeys == null) return null;
+	// TODO memory cache redis cache system for getList
+	public CompletableFuture<List<String>> getList(String table, String[] columns, String uniqueKey, Object uniqueValue) {
+		if (table == null || columns == null) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
 			try {
 				ResultSet result;
 				if (StorageManager.isMySQL()) {
 					assert StorageManager.getMySQLDatabase() != null : "Select list command failed";
-					result = StorageManager.getMySQLDatabase().select(table, primaryKeys, uniqueKey, uniqueValue.toString());
+					result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
 				} else {
 					assert StorageManager.getSQLiteDatabase() != null : "Select list command failed.";
-					result = StorageManager.getSQLiteDatabase().select(table, primaryKeys, uniqueKey, uniqueValue.toString());
+					result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
 				}
 				if (result == null) return null;
 
 				List<String> data = new ArrayList<>();
 
 				while (result.next()) {
-					String primaryKey = result.getString(primaryKeys[1]);
+					String primaryKey = result.getString(columns[1]);
 					if (primaryKey == null) continue;
 
 					data.add(primaryKey);
@@ -201,6 +258,51 @@ public class Zocker {
 		if (table == null || columns == null) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				ShardedJedis redis = redisCacheManager.getResource();
+				List<String> redisData = redis.hmget(uniqueValue.toString() + "-" + table, columns);
+
+				redis.close();
+
+				if (redisData != null) {
+					Map<String, String> data = new HashMap<>();
+
+					for (int i = 0; i < redisData.size(); i++) {
+						String value = redisData.get(i);
+						if (value == null) continue;
+
+						data.put(columns[i], redisData.get(i));
+					}
+
+					if (data.size() == columns.length) {
+						return data;
+					}
+				}
+			} else if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+
+				if (cacheEntry != null) {
+					if (!cacheEntry.getColumns().isEmpty()) {
+
+						Map<String, String> data = new HashMap<>();
+
+						for (String column : columns) {
+							for (String key : cacheEntry.getColumns().keySet()) {
+								if (column.equalsIgnoreCase(key)) {
+									data.put(column, cacheEntry.getColumns().get(column).toString());
+								}
+							}
+						}
+
+						if (data.size() == columns.length) {
+							return data;
+						}
+					}
+				}
+			}
+
 			try {
 				ResultSet result;
 				if (StorageManager.isMySQL()) {
@@ -213,17 +315,36 @@ public class Zocker {
 				if (result == null) return null;
 
 				if (result.next()) {
-					Map<String, String> hmsetData = new HashMap<>();
+					Map<String, String> data = new HashMap<>();
 					for (String column : columns) {
 						String value = result.getString(column);
 						if (value == null) continue;
 
-						hmsetData.put(column, value);
+						data.put(column, value);
 					}
 
 					result.close();
 
-					return hmsetData;
+					if (StorageManager.isRedis()) {
+						RedisCacheManager redisCacheManager = new RedisCacheManager();
+						ShardedJedis redis = redisCacheManager.getResource();
+
+						redis.hmset(uniqueValue.toString() + "-" + table, data);
+
+						redis.close();
+					} else if (StorageManager.isMemory()) {
+						MemoryCacheEntryBuilder memoryCacheEntryBuilder = new MemoryCacheEntryBuilder();
+						memoryCacheEntryBuilder.setUniqueKey(uniqueValue.toString() + "-" + table);
+
+						for (String column : columns) {
+							String value = result.getString(column);
+							if (value == null) continue;
+
+							memoryCacheEntryBuilder.addColumn(column, value);
+						}
+					}
+
+					return data;
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -235,13 +356,59 @@ public class Zocker {
 	}
 
 	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String[] uniqueKeys, Object[] uniqueValues) {
-		return get(table, columns, uniqueKeys, uniqueValues, this.getUUIDString());
-	}
-
-	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String[] uniqueKeys, Object[] uniqueValues, Object uniqueValue) {
-		if (table == null || columns == null || uniqueKeys.length != uniqueValues.length || uniqueValue == null) return null;
+		if (table == null || columns == null || uniqueKeys.length != uniqueValues.length) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			String uniqueKey = generateKey(table, uniqueValues);
+			try {
+				if (StorageManager.isRedis()) {
+					RedisCacheManager redisCacheManager = new RedisCacheManager();
+					ShardedJedis redis = redisCacheManager.getResource();
+					List<String> redisData = redis.hmget(uniqueKey, columns);
+
+					redis.close();
+
+					if (redisData != null) {
+						Map<String, String> data = new HashMap<>();
+
+						for (int i = 0; i < redisData.size(); i++) {
+							String value = redisData.get(i);
+							if (value == null) continue;
+
+							data.put(columns[i], redisData.get(i));
+						}
+
+						if (data.size() == columns.length) {
+							return data;
+						}
+					}
+				} else if (StorageManager.isMemory()) {
+					MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+					MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+
+					if (cacheEntry != null) {
+						if (!cacheEntry.getColumns().isEmpty()) {
+
+							Map<String, String> data = new HashMap<>();
+
+							for (String column : columns) {
+								for (String key : cacheEntry.getColumns().keySet()) {
+									if (column.equalsIgnoreCase(key)) {
+										data.put(column, cacheEntry.getColumns().get(column).toString());
+									}
+								}
+							}
+
+							if (data.size() == columns.length) {
+								return data;
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
 			try {
 				ResultSet result;
 				if (StorageManager.isMySQL()) {
@@ -251,21 +418,43 @@ public class Zocker {
 					assert StorageManager.getSQLiteDatabase() != null : "Select command failed.";
 					result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKeys, uniqueValues);
 				}
-				
+
 				if (result == null) return null;
 
 				if (result.next()) {
-					Map<String, String> hmsetData = new HashMap<>();
+					Map<String, String> data = new HashMap<>();
 					for (String column : columns) {
 						String value = result.getString(column);
 						if (value == null) continue;
 
-						hmsetData.put(column, value);
+						data.put(column, value);
 					}
 
 					result.close();
 
-					return hmsetData;
+					if (StorageManager.isRedis()) {
+						RedisCacheManager redisCacheManager = new RedisCacheManager();
+						ShardedJedis redis = redisCacheManager.getResource();
+
+						redis.hmset(uniqueKey, data);
+
+						redis.close();
+					} else if (StorageManager.isMemory()) {
+						MemoryCacheEntryBuilder memoryCacheEntryBuilder = new MemoryCacheEntryBuilder();
+						memoryCacheEntryBuilder.setUniqueKey(uniqueKey);
+						memoryCacheEntryBuilder.setExpireDuration(Main.CORE_STORAGE.getInt("storage.cache.memory.expiration.duration"), TimeUnit.SECONDS);
+
+						for (String column : columns) {
+							String value = result.getString(column);
+							if (value == null) continue;
+
+							memoryCacheEntryBuilder.addColumn(column, value);
+						}
+
+						new MemoryCacheManager().add(memoryCacheEntryBuilder.build());
+					}
+
+					return data;
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -275,7 +464,6 @@ public class Zocker {
 			return null;
 		});
 	}
-
 
 	// endregion
 
@@ -289,6 +477,21 @@ public class Zocker {
 		if (table == null || column == null || uniqueKey == null || uniqueValue == null || value == null) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				ShardedJedis redis = redisCacheManager.getResource();
+
+				redis.hset(uniqueValue.toString() + "-" + table, column, value.toString());
+
+				redis.close();
+			} else if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+				if (cacheEntry != null) {
+					cacheEntry.updateColumn(column, value.toString());
+				}
+			}
+
 			if (StorageManager.isMySQL()) {
 				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
 				return StorageManager.getMySQLDatabase().update(table, column, value.toString(), uniqueKey, uniqueValue.toString());
@@ -311,6 +514,27 @@ public class Zocker {
 		if (table == null || columns.length != values.length || uniqueKey == null || uniqueValue == null) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				ShardedJedis redis = redisCacheManager.getResource();
+				Map<String, String> keyValues = new HashMap<>();
+
+				for (int i = 0; i < columns.length; i++) {
+					keyValues.put(columns[i], values[i].toString());
+				}
+
+				redis.hmset(uniqueValue.toString() + "-" + table, keyValues);
+				redis.close();
+
+			} else if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+				if (cacheEntry != null) {
+					for (int i = 0; i < columns.length; i++) {
+						cacheEntry.updateColumn(columns[i], values[i].toString());
+					}
+				}
+			}
 			if (StorageManager.isMySQL()) {
 				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
 				return StorageManager.getMySQLDatabase().update(table, columns, values, uniqueKey, uniqueValue.toString());
@@ -322,13 +546,25 @@ public class Zocker {
 	}
 
 	public CompletableFuture<Boolean> set(String table, String column, Object value, String[] uniqueKeys, Object[] uniqueValues) {
-		return this.set(table, column, value, uniqueKeys, uniqueValues, this.getUUIDString());
-	}
-
-	public CompletableFuture<Boolean> set(String table, String column, Object value, String[] uniqueKeys, Object[] uniqueValues, Object uniqueValue) {
 		if (table == null || column == null || value == null || uniqueKeys.length != uniqueValues.length) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			String uniqueKey = generateKey(table, uniqueValues);
+
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				ShardedJedis redis = redisCacheManager.getResource();
+
+				redis.hset(uniqueKey, column, value.toString());
+				redis.close();
+			} else if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+				if (cacheEntry != null) {
+					cacheEntry.updateColumn(column, value.toString());
+				}
+			}
+
 			if (StorageManager.isMySQL()) {
 				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
 				return StorageManager.getMySQLDatabase().update(table, column, value, uniqueKeys, uniqueValues);
@@ -340,13 +576,32 @@ public class Zocker {
 	}
 
 	public CompletableFuture<Boolean> set(String table, String[] columns, Object[] values, String[] uniqueKeys, Object[] uniqueValues) {
-		return this.set(table, columns, values, uniqueKeys, uniqueValues, this.getUUIDString());
-	}
-
-	public CompletableFuture<Boolean> set(String table, String[] columns, Object[] values, String[] uniqueKeys, Object[] uniqueValues, Object uniqueValue) {
 		if (table == null || columns.length != values.length || uniqueKeys.length != uniqueValues.length) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			String uniqueKey = generateKey(table, uniqueValues);
+
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				ShardedJedis redis = redisCacheManager.getResource();
+				Map<String, String> keyValues = new HashMap<>();
+
+				for (int i = 0; i < columns.length; i++) {
+					keyValues.put(columns[i], values[i].toString());
+				}
+
+				redis.hmset(uniqueKey, keyValues);
+				redis.close();
+			} else if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+				if (cacheEntry != null) {
+					for (int i = 0; i < columns.length; i++) {
+						cacheEntry.updateColumn(columns[i], values[i].toString());
+					}
+				}
+			}
+
 			if (StorageManager.isMySQL()) {
 				assert StorageManager.getMySQLDatabase() != null : "Update command failed.";
 				return StorageManager.getMySQLDatabase().update(table, columns, values, uniqueKeys, uniqueValues);
@@ -519,12 +774,25 @@ public class Zocker {
 	// region Delete
 
 	public CompletableFuture<Boolean> delete(String table, String[] primaryKeys, Object[] primaryValues) {
-		return this.delete(table, primaryKeys, primaryValues, this.uuid.toString());
-	}
-
-	public CompletableFuture<Boolean> delete(String table, String[] primaryKeys, Object[] primaryValues, String uniqueValue) {
 		if (table == null || primaryValues == null) return null;
 		if (primaryKeys.length != primaryValues.length) return null;
+
+		String uniqueKey = generateKey(table, primaryValues);
+
+		if (StorageManager.isRedis()) {
+			RedisCacheManager redisCacheManager = new RedisCacheManager();
+			ShardedJedis redis = redisCacheManager.getResource();
+			
+			redis.hdel(uniqueKey);
+			
+			redis.close();
+		} else if (StorageManager.isMemory()) {
+			MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+			MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+			if (cacheEntry != null) {
+				memoryCacheManager.remove(cacheEntry);
+			}
+		}
 
 		return CompletableFuture.supplyAsync(() -> {
 			if (StorageManager.isMySQL()) {
@@ -654,6 +922,19 @@ public class Zocker {
 	}
 
 	// endregion
+
+	private String generateKey(String table, Object[] keyValues) {
+		StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < keyValues.length; i++) {
+			stringBuilder.append(keyValues[i].toString());
+			if (i != (keyValues.length - 1)) {
+				stringBuilder.append("-");
+			}
+		}
+
+		stringBuilder.append("-").append(table);
+		return stringBuilder.toString();
+	}
 
 	// region Getter and Setter
 

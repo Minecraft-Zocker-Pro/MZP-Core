@@ -109,4 +109,13 @@ public class CompatibleMessage {
 
 		player.sendTitle(title, subTitle);
 	}
+
+	public static void sendTitle(Player player, String title, String subTitle, int fadeIn, int stay, int fadeOut) {
+		if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_11)) {
+			player.sendTitle(title, subTitle, fadeIn, stay, fadeOut);
+			return;
+		}
+
+		player.sendTitle(title, subTitle);
+	}
 }

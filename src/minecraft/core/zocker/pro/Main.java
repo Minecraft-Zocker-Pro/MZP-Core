@@ -8,7 +8,10 @@ import minecraft.core.zocker.pro.event.PlayerVoidFallEvent;
 import minecraft.core.zocker.pro.inventory.InventoryActive;
 import minecraft.core.zocker.pro.listener.PlayerJoinListener;
 import minecraft.core.zocker.pro.listener.PlayerQuitListener;
+import minecraft.core.zocker.pro.listener.RedisMessageListener;
 import minecraft.core.zocker.pro.storage.StorageManager;
+import minecraft.core.zocker.pro.storage.cache.memory.MemoryCacheManager;
+import minecraft.core.zocker.pro.storage.cache.redis.RedisCacheManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
@@ -51,7 +54,6 @@ public class Main extends CorePlugin {
 		}
 	}
 
-	@Override
 	public void onDisable() {
 		if (StorageManager.isMySQL()) {
 			assert StorageManager.getMySQLDatabase() != null;
@@ -64,7 +66,10 @@ public class Main extends CorePlugin {
 		}
 
 		if (StorageManager.isRedis()) {
-//			StorageManager.getRedisDatabase()
+			RedisCacheManager.closeConnections();
+		}
+		if (StorageManager.isMemory()) {
+			MemoryCacheManager.stop();
 		}
 
 		InventoryActive.getActiveInventorys().forEach((inventory, inventoryActive) -> {
@@ -78,7 +83,6 @@ public class Main extends CorePlugin {
 		InventoryActive.getActiveGUIs().clear();
 	}
 
-
 	@Override
 	public void registerCommand() {
 		getCommand("core").setExecutor(new CoreCommand());
@@ -90,6 +94,10 @@ public class Main extends CorePlugin {
 		pluginManager.registerEvents(new PlayerJoinListener(), this);
 		pluginManager.registerEvents(new PlayerQuitListener(), this);
 		pluginManager.registerEvents(new InventoryActive.GUIActiveListener(), this);
+
+		if(CORE_STORAGE.getBool("storage.cache.redis.enabled")) {
+			pluginManager.registerEvents(new RedisMessageListener(), this);
+		}
 	}
 
 	@Override
@@ -118,15 +126,19 @@ public class Main extends CorePlugin {
 		// SQLite
 		CORE_STORAGE.set("storage.database.sql.enabled", true, "0.0.1");
 
+		// Memory
+		CORE_STORAGE.set("storage.cache.memory.enabled", true, "0.0.11");
+		CORE_STORAGE.set("storage.cache.memory.delay", 1, "0.0.11");
+		CORE_STORAGE.set("storage.cache.memory.expiration.duration", 60, "0.0.11");
+		CORE_STORAGE.set("storage.cache.memory.expiration.renew", true, "0.0.11");
+
 		// Redis
 		CORE_STORAGE.set("storage.cache.redis.enabled", false, "0.0.1");
 		CORE_STORAGE.set("storage.cache.redis.host", "localhost", "0.0.1");
-		CORE_STORAGE.set("storage.cache.redis.port", 3306, "0.0.1");
-		CORE_STORAGE.set("storage.cache.redis.database", "mzp_core", "0.0.1");
-		CORE_STORAGE.set("storage.cache.redis.username", "mzp_core", "0.0.1");
+		CORE_STORAGE.set("storage.cache.redis.port", 6379, "0.0.1");
 		CORE_STORAGE.set("storage.cache.redis.password", "!default", "0.0.1");
 
-		CORE_STORAGE.save();
+		CORE_STORAGE.setVersion("0.0.11", true);
 
 		// Message
 		CORE_MESSAGE = new Config("message.yml", this.getPluginName());

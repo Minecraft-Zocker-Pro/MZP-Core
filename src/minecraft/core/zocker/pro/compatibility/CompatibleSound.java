@@ -1228,6 +1228,4 @@ public enum CompatibleSound {
 
         player.playSound(player.getLocation(), CompatibleSound.BLOCK_NOTE_BLOCK_BASS.getSound(), 2, 2);
     }
-    
-    
 }

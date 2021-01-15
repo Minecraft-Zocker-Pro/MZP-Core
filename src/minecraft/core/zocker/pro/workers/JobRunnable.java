@@ -2,97 +2,100 @@ package minecraft.core.zocker.pro.workers;
 
 public abstract class JobRunnable implements Runnable {
 
-    private Job job;
-    private String method, className;
+	private Job job;
+	private String method, className;
 
-    /**
-     * Instantiates a new Job runnable.
-     *
-     * @param method    the method
-     * @param className the class name
-     */
-    public JobRunnable(String method, String className) {
-        this.method = method;
-        this.className = className;
-    }
+	public JobRunnable() {
+	}
 
-    /**
-     * Is cancelled boolean.
-     *
-     * @return the boolean
-     * @throws IllegalStateException the illegal state exception
-     */
-    public synchronized boolean isCancelled() throws IllegalStateException {
-        return this.job.isCancelled();
-    }
+	/**
+	 * Instantiates a new Job runnable.
+	 *
+	 * @param method    the method
+	 * @param className the class name
+	 */
+	public JobRunnable(String method, String className) {
+		this.method = method;
+		this.className = className;
+	}
 
-    /**
-     * Cancel.
-     *
-     * @throws IllegalStateException the illegal state exception
-     */
-    public synchronized void cancel() throws IllegalStateException {
-        job.cancel(false);
-    }
+	/**
+	 * Is cancelled boolean.
+	 *
+	 * @return the boolean
+	 * @throws IllegalStateException the illegal state exception
+	 */
+	public synchronized boolean isCancelled() throws IllegalStateException {
+		return this.job.isCancelled();
+	}
 
-    /**
-     * Cancel.
-     *
-     * @param forceStop the force stop
-     * @throws IllegalStateException the illegal state exception
-     */
-    public synchronized void cancel(Boolean forceStop) throws IllegalStateException {
-        job.cancel(forceStop);
-    }
+	/**
+	 * Cancel.
+	 *
+	 * @throws IllegalStateException the illegal state exception
+	 */
+	public synchronized void cancel() throws IllegalStateException {
+		job.cancel(false);
+	}
 
-    /**
-     * Gets job.
-     *
-     * @return the job
-     * @throws IllegalStateException the illegal state exception
-     */
-    public synchronized Job getJob() throws IllegalStateException {
-        return this.job;
-    }
+	/**
+	 * Cancel.
+	 *
+	 * @param forceStop the force stop
+	 * @throws IllegalStateException the illegal state exception
+	 */
+	public synchronized void cancel(Boolean forceStop) throws IllegalStateException {
+		job.cancel(forceStop);
+	}
 
-    /**
-     * Initialize.
-     *
-     * @param job the job
-     */
-    protected void initialize(Job job) {
-        this.job = job;
-    }
+	/**
+	 * Gets job.
+	 *
+	 * @return the job
+	 * @throws IllegalStateException the illegal state exception
+	 */
+	public synchronized Job getJob() throws IllegalStateException {
+		return this.job;
+	}
 
-    /**
-     * Gets name.
-     *
-     * @return the name
-     */
-    public String getName() {
-        return method + "@" + className;
-    }
+	/**
+	 * Initialize.
+	 *
+	 * @param job the job
+	 */
+	protected void initialize(Job job) {
+		this.job = job;
+	}
 
-    /**
-     * Sets method.
-     *
-     * @param method the method
-     * @return the method
-     */
-    public JobRunnable setMethod(String method) {
-        this.method = method;
-        return this;
-    }
+	/**
+	 * Gets name.
+	 *
+	 * @return the name
+	 */
+	public String getName() {
+		return method + "@" + className;
+	}
 
-    /**
-     * Sets class name.
-     *
-     * @param className the class name
-     * @return the class name
-     */
-    public JobRunnable setClassName(String className) {
-        this.className = className;
-        return this;
-    }
+	/**
+	 * Sets method.
+	 *
+	 * @param method the method
+	 * @return the method
+	 */
+	public JobRunnable setMethod(String method) {
+		this.method = method;
+		return this;
+	}
+
+	/**
+	 * Sets class name.
+	 *
+	 * @param className the class name
+	 * @return the class name
+	 */
+	public JobRunnable setClassName(String className) {
+		this.className = className;
+		return this;
+	}
 
 }
