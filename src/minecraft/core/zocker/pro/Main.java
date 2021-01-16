@@ -68,6 +68,7 @@ public class Main extends CorePlugin {
 		if (StorageManager.isRedis()) {
 			RedisCacheManager.closeConnections();
 		}
+
 		if (StorageManager.isMemory()) {
 			MemoryCacheManager.stop();
 		}
@@ -95,7 +96,7 @@ public class Main extends CorePlugin {
 		pluginManager.registerEvents(new PlayerQuitListener(), this);
 		pluginManager.registerEvents(new InventoryActive.GUIActiveListener(), this);
 
-		if(CORE_STORAGE.getBool("storage.cache.redis.enabled")) {
+		if (CORE_STORAGE.getBool("storage.cache.redis.enabled")) {
 			pluginManager.registerEvents(new RedisMessageListener(), this);
 		}
 	}
@@ -177,6 +178,11 @@ public class Main extends CorePlugin {
 		});
 
 		InventoryActive.getActiveGUIs().clear();
+
+		if (StorageManager.isMemory()) {
+			MemoryCacheManager.stop();
+			MemoryCacheManager.start();
+		}
 
 		this.handleVoidFall();
 	}

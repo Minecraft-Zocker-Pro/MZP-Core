@@ -132,7 +132,6 @@ public class Zocker {
 				redis.close();
 
 				if (redisData != null) {
-					System.out.println("return redis cache: " + redisData);
 					return redisData;
 				}
 			} else if (StorageManager.isMemory()) {

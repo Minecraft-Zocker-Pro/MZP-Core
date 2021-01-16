@@ -33,7 +33,7 @@ public class RedisPlayerMessagePacket extends RedisPacketAbstract {
 		this.identifyType = RedisPacketIdentifyType.PLAYER_MESSAGE_TITLE;
 	}
 
-	public RedisPlayerMessagePacket(UUID uuid, String title, String subTitle, int fadeIn, int fadeOut, int stay) {
+	public RedisPlayerMessagePacket(UUID uuid, String title, String subTitle, int fadeIn, int stay, int fadeOut) {
 		this.uuid = uuid;
 		this.message = title;
 		this.subTitle = subTitle;

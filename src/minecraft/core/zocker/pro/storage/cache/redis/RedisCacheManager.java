@@ -25,7 +25,6 @@ public class RedisCacheManager {
 		if (redisPacket == null) return;
 		if (REDIS_PUBLISH == null) return;
 
-		System.out.println("Send packets to: " + redisPacket.getServerTargetName());
 		REDIS_PUBLISH.publish(redisPacket.getServerTargetName().toUpperCase(), redisPacket.toJSON());
 	}
 
@@ -71,7 +70,6 @@ public class RedisCacheManager {
 				public void onMessage(String channel, String message) {
 					if (channel == null) return;
 					if (message == null) return;
-					System.out.println("redis channel: " + channel + " msg:" + message);
 
 					try {
 						JSONObject json = new JSONObject(message);
@@ -89,8 +87,6 @@ public class RedisCacheManager {
 								}
 							}
 						}
-
-						System.out.println("Valid packet received");
 
 						String sender = json.getString("sender");
 						String receiver = json.getString("receiver");

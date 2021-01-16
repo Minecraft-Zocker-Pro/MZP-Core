@@ -22,7 +22,6 @@ public class MemoryCacheManager {
 			@Override
 			public void run() {
 				long current = System.currentTimeMillis();
-				System.out.println("cache size: " + memoryCacheEntryList.size());
 
 				try {
 					memoryCacheEntryList.stream()
@@ -30,7 +29,6 @@ public class MemoryCacheManager {
 						.forEach(memoryCacheEntry -> {
 							if (memoryCacheEntry.getExpirationDuration() > 0) {
 								if ((memoryCacheEntry.getExpirationDuration() - current) <= 0) {
-									System.out.println("Removed " + memoryCacheEntry.getUniqueKey() + " from memory cache1");
 									memoryCacheEntryList.remove(memoryCacheEntry);
 									return;
 								}
@@ -41,7 +39,6 @@ public class MemoryCacheManager {
 								Player player = Bukkit.getPlayer(UUID.fromString(uuid));
 								if (player != null && player.isOnline()) return;
 
-								System.out.println("Removed " + memoryCacheEntry.getUniqueKey() + " from memory cache2");
 								memoryCacheEntryList.remove(memoryCacheEntry);
 							}
 						});
@@ -67,8 +64,6 @@ public class MemoryCacheManager {
 	public MemoryCacheEntry get(String uniqueKey) {
 		if (memoryCacheEntryList.isEmpty()) return null;
 
-		System.out.println("searching in memory cache: " + uniqueKey);
-
 		MemoryCacheEntry cacheEntry = memoryCacheEntryList.stream()
 			.filter(Objects::nonNull)
 			.filter(memoryCacheEntry -> memoryCacheEntry.getUniqueKey() != null)
@@ -78,9 +73,7 @@ public class MemoryCacheManager {
 
 		if (cacheEntry != null) {
 			if (Main.CORE_STORAGE.getBool("storage.cache.memory.expiration.renew")) {
-				System.out.println("old time: " + cacheEntry.getExpirationDuration());
 				cacheEntry.setExpirationDuration(Main.CORE_STORAGE.getLong("storage.cache.memory.expiration.duration"), TimeUnit.SECONDS);
-				System.out.println("new time: " + cacheEntry.getExpirationDuration());
 			}
 
 			return cacheEntry;
