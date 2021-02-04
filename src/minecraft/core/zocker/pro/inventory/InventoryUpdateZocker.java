@@ -31,7 +31,6 @@ public abstract class InventoryUpdateZocker extends InventoryZocker {
 		return updateOffset;
 	}
 
-
 	public boolean isClearBefore() {
 		return clearBefore;
 	}

@@ -3,16 +3,20 @@ package minecraft.core.zocker.pro.inventory;
 import com.google.common.collect.Maps;
 import minecraft.core.zocker.pro.Main;
 import minecraft.core.zocker.pro.Zocker;
+import minecraft.core.zocker.pro.compatibility.CompatibleMaterial;
 import minecraft.core.zocker.pro.compatibility.CompatibleSound;
+import minecraft.core.zocker.pro.compatibility.ServerVersion;
 import minecraft.core.zocker.pro.inventory.page.InventoryPage;
 import minecraft.core.zocker.pro.inventory.util.ItemBuilder;
 import minecraft.core.zocker.pro.nms.NmsManager;
 import minecraft.core.zocker.pro.nms.api.anvil.AnvilCore;
 import minecraft.core.zocker.pro.nms.api.anvil.CustomAnvil;
+import minecraft.core.zocker.pro.nms.api.anvil.methods.AnvilTextChange;
 import minecraft.core.zocker.pro.util.Validator;
 import minecraft.core.zocker.pro.workers.JobRunnable;
 import minecraft.core.zocker.pro.workers.instances.WorkerPriority;
 import minecraft.core.zocker.pro.workers.instances.Workers;
+import org.apache.commons.lang.SystemUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -22,6 +26,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -107,16 +112,31 @@ public class InventoryActive {
 
 			CustomAnvil anvil = inventoryAnvilZocker.getAnvil();
 			anvil.setCustomTitle(inventoryAnvilZocker.getTitle());
-			anvil.setLevelCost(0);
-			anvil.setOutput(inventoryAnvilZocker.getResultInventoryEntry().getItem());
+			anvil.setLevelCost(inventoryAnvilZocker.getLevelCost());
+
 			anvil.setOnChange(() -> {
-				ItemBuilder itemBuilder = new ItemBuilder(inventoryAnvilZocker.getResultInventoryEntry().getItem());
-				itemBuilder.setName(anvil.getRenameText());
-				anvil.setOutput(itemBuilder.toItemStack());
+				if (anvil.getRenameText() != null) {
+					ItemStack itemStack = new ItemStack(CompatibleMaterial.PAPER.getMaterial());
+					ItemMeta itemMeta = itemStack.getItemMeta();
+
+					// For 1.8.x players on Java 13
+					String renameText = anvil.getRenameText();
+					if (renameText.startsWith("ff")) {
+						renameText = renameText.substring(2);
+					}
+
+					itemMeta.setDisplayName(renameText);
+					itemStack.setItemMeta(itemMeta);
+
+					anvil.setOutput(itemStack);
+				}
 			});
 
 			anvil.setLeftInput(inventoryAnvilZocker.getLeftInventoryEntry().getItem());
 			anvil.setRightInput(inventoryAnvilZocker.getRightInventoryEntry().getItem());
+			anvil.setOutput(new ItemStack(inventoryAnvilZocker.getResultInventoryEntry().getItem()));
+
+			anvil.setRenameText(inventoryAnvilZocker.getResultInventoryEntry().getItem().getItemMeta().getDisplayName());
 
 			this.inventoryZocker.addItem(inventoryAnvilZocker.getLeftInventoryEntry());
 			this.inventoryZocker.addItem(inventoryAnvilZocker.getRightInventoryEntry());
@@ -287,7 +307,7 @@ public class InventoryActive {
 						} else {
 							inventoryUpdateZocker.onUpdate();
 							inventoryUpdateZocker.update(zocker);
-//							inventoryUpdateZocker.getEntries().clear();
+							inventoryUpdateZocker.getEntries().clear();
 						}
 
 					} catch (Exception e) {
@@ -439,12 +459,23 @@ public class InventoryActive {
 				if (anvil == null) return;
 
 				if (event.getSlotType() == InventoryType.SlotType.RESULT) {
-					CompletableFuture.runAsync(() -> inventoryAnvilZocker.onResult(anvil.getRenameText()));
+					CompletableFuture.runAsync(() -> {
+						String renameText = anvil.getRenameText();
+						if (renameText != null) {
+							if (renameText.startsWith("ff")) {
+								renameText = renameText.substring(2);
+								inventoryAnvilZocker.onResult(renameText);
+								return;
+							}
+						}
+
+						inventoryAnvilZocker.onResult(anvil.getRenameText());
+					});
 				}
 			}
 
 			// Trigger onClick event
-			CompletableFuture.runAsync(() -> active.getInventoryZocker().onClick(active.getInventoryZocker(), event));
+			active.getInventoryZocker().onClick(active.getInventoryZocker(), event);
 
 			GUIActiveEntry activeEntry = active.getActiveEntry(event.getSlot());
 			if (activeEntry == null) return;
@@ -455,17 +486,17 @@ public class InventoryActive {
 				CompatibleSound.playChangedSound(player);
 			}
 
-			Consumer<InventoryClickEvent> consumer = activeEntry.getEntry().getClickAction(event.getClick());
-			if (consumer == null) return;
-
 			if (!event.getClickedInventory().equals(inventory)) return;
 
-			if (activeEntry.getEntry().isAsync()) {
-				CompletableFuture.runAsync(() -> consumer.accept(event));
-				return;
-			}
+			if (activeEntry.getEntry().getClickAction(event.getClick()) == null) return;
+			activeEntry.getEntry().getClickAction(event.getClick()).stream().filter(Objects::nonNull).forEach(consumer -> {
+				if (activeEntry.getEntry().isAsync()) {
+					CompletableFuture.runAsync(() -> consumer.accept(event));
+					return;
+				}
 
-			consumer.accept(event);
+				consumer.accept(event);
+			});
 		}
 
 		public static class GUIActiveEntry {

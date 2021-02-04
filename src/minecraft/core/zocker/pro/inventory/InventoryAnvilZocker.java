@@ -35,7 +35,7 @@ public abstract class InventoryAnvilZocker extends InventoryZocker {
 		return 0;
 	}
 
-	public abstract int levelCost();
+	public abstract int getLevelCost();
 
 	public CustomAnvil getAnvil() {
 		return anvil;

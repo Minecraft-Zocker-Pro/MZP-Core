@@ -36,7 +36,7 @@ public class ItemBuilder {
 	public ItemBuilder(ItemStack itemStack) {
 		this.itemFactory = Bukkit.getItemFactory();
 		this.itemStack = new ItemStack(itemStack);
-		this.itemMeta = this.itemStack.getItemMeta();
+		this.itemMeta = this.itemFactory.getItemMeta(this.itemStack.getType());
 	}
 
 	/**
