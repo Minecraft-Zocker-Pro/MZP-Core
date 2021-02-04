@@ -219,10 +219,18 @@ public class Zocker {
 				ResultSet result;
 				if (StorageManager.isMySQL()) {
 					assert StorageManager.getMySQLDatabase() != null : "Select list command failed";
-					result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+					if (uniqueKey != null) {
+						result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+					} else {
+						result = StorageManager.getMySQLDatabase().select(table, columns);
+					}
 				} else {
 					assert StorageManager.getSQLiteDatabase() != null : "Select list command failed.";
-					result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+					if (uniqueKey != null) {
+						result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
+					} else {
+						result = StorageManager.getSQLiteDatabase().select(table, columns);
+					}
 				}
 				if (result == null) return null;
 
@@ -443,8 +451,8 @@ public class Zocker {
 						memoryCacheEntryBuilder.setUniqueKey(uniqueKey);
 						memoryCacheEntryBuilder.setExpireDuration(Main.CORE_STORAGE.getInt("storage.cache.memory.expiration.duration"), TimeUnit.SECONDS);
 
-						for (String column : columns) {
-							String value = result.getString(column);
+						for (String column : data.keySet()) {
+							String value = data.get(column);
 							if (value == null) continue;
 
 							memoryCacheEntryBuilder.addColumn(column, value);
@@ -620,7 +628,7 @@ public class Zocker {
 	 * @param column The unique column for the required value
 	 * @return boolean
 	 */
-	public boolean isValue(String table, String column) {
+	public CompletableFuture<Boolean> isValue(String table, String column) {
 		return this.isValue(table, column, "uuid", this.uuid.toString());
 	}
 
@@ -631,31 +639,7 @@ public class Zocker {
 	 * @param uniqueValue The unique value of the key e.x the player uuid
 	 * @return boolean
 	 */
-	public boolean isValue(String table, String column, String uniqueKey, Object uniqueValue) {
-		CompletableFuture<String> stringCompletableFuture = this.get(table, column, uniqueKey, uniqueValue);
-		try {
-			String boolString = stringCompletableFuture.get();
-
-			if (boolString == null) return false;
-			if (boolString.equals("1")) return true;
-			if (boolString.equals("0")) return false;
-
-			return false;
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-		}
-
-		return false;
-	}
-
-	/**
-	 * @param table       SQL table
-	 * @param column      The unique column for the required value
-	 * @param uniqueKey   The unique key e.x the player uuid
-	 * @param uniqueValue The unique value of the key e.x the player uuid
-	 * @return boolean
-	 */
-	public CompletableFuture<Boolean> isValueAsync(String table, String column, String uniqueKey, Object uniqueValue) {
+	public CompletableFuture<Boolean> isValue(String table, String column, String uniqueKey, Object uniqueValue) {
 		return CompletableFuture.supplyAsync(() -> {
 			CompletableFuture completableFuture = this.get(table, column, uniqueKey, uniqueValue).thenApply(boolString -> {
 				if (boolString == null) return false;
@@ -751,7 +735,7 @@ public class Zocker {
 
 	// region InsertComplex
 
-	public CompletableFuture<Boolean> insert(String table, String[] columns, Object[] values, String[] primaryKeys, Object[] primaryValues, Object uniqueValue) {
+	public CompletableFuture<Boolean> insert(String table, String[] columns, Object[] values, String[] primaryKeys, Object[] primaryValues) {
 		if (primaryValues == null) return null;
 		if (primaryKeys == null) return null;
 		if (columns.length != values.length) return null;
@@ -781,9 +765,9 @@ public class Zocker {
 		if (StorageManager.isRedis()) {
 			RedisCacheManager redisCacheManager = new RedisCacheManager();
 			ShardedJedis redis = redisCacheManager.getResource();
-			
+
 			redis.hdel(uniqueKey);
-			
+
 			redis.close();
 		} else if (StorageManager.isMemory()) {
 			MemoryCacheManager memoryCacheManager = new MemoryCacheManager();

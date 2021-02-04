@@ -11,6 +11,7 @@ import minecraft.core.zocker.pro.inventory.InventoryActive;
 import minecraft.core.zocker.pro.listener.PlayerJoinListener;
 import minecraft.core.zocker.pro.listener.PlayerQuitListener;
 import minecraft.core.zocker.pro.listener.RedisMessageListener;
+import minecraft.core.zocker.pro.network.NetworkServerManager;
 import minecraft.core.zocker.pro.storage.StorageManager;
 import minecraft.core.zocker.pro.storage.cache.memory.MemoryCacheManager;
 import minecraft.core.zocker.pro.storage.cache.redis.RedisCacheManager;
@@ -73,6 +74,7 @@ public class Main extends CorePlugin {
 
 		if (StorageManager.isRedis()) {
 			RedisCacheManager.closeConnections();
+			NetworkServerManager.stop();
 		}
 
 		if (StorageManager.isMemory()) {
@@ -188,6 +190,8 @@ public class Main extends CorePlugin {
 		if (StorageManager.isMemory()) {
 			MemoryCacheManager.stop();
 			MemoryCacheManager.start();
+		} else {
+			NetworkServerManager.stop();
 		}
 
 		this.handleVoidFall();

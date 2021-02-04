@@ -20,18 +20,20 @@ public class PlayerJoinListener implements Listener {
 
 		finalZocker.hasValueAsync("player", "uuid", "uuid", finalZocker.getPlayer().getUniqueId().toString()).thenApplyAsync(aBoolean -> {
 			if (aBoolean) {
-				finalZocker.set("player", new String[]{"name", "server"}, new Object[]{finalZocker.getPlayer().getName(), StorageManager.getServerName()});
+				finalZocker.set("player",
+					new String[]{"name", "server", "online"},
+					new Object[]{finalZocker.getPlayer().getName(), StorageManager.getServerName(), 1});
 				Bukkit.getPluginManager().callEvent(new ZockerDataInitializeEvent(finalZocker));
 				return true;
 			}
 
 			finalZocker.insert(
 				"player",
-				new String[]{"uuid", "name", "server"},
-				new Object[]{finalZocker.getPlayer().getUniqueId().toString(), finalZocker.getPlayer().getName(), StorageManager.getServerName()});
+				new String[]{"uuid", "name", "server", "online"},
+				new Object[]{finalZocker.getPlayer().getUniqueId().toString(), finalZocker.getPlayer().getName(), StorageManager.getServerName(), 1});
 			Bukkit.getPluginManager().callEvent(new ZockerDataInitializeEvent(finalZocker));
 
-			return aBoolean;
+			return false;
 		});
 	}
 }
