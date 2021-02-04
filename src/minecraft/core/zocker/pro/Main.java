@@ -6,6 +6,7 @@ import minecraft.core.zocker.pro.compatibility.ServerProject;
 import minecraft.core.zocker.pro.condition.ConditionManager;
 import minecraft.core.zocker.pro.config.Config;
 import minecraft.core.zocker.pro.event.PlayerVoidFallEvent;
+import minecraft.core.zocker.pro.hook.HookManager;
 import minecraft.core.zocker.pro.inventory.InventoryActive;
 import minecraft.core.zocker.pro.listener.PlayerJoinListener;
 import minecraft.core.zocker.pro.listener.PlayerQuitListener;
@@ -43,6 +44,8 @@ public class Main extends CorePlugin {
 
 		this.buildConfig();
 
+		new HookManager().load("Vault");
+		
 		StorageManager.initialize();
 
 		this.registerCommand();

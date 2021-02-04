@@ -27,6 +27,7 @@ hs_err_pid*
 gradle
 gradlew.bat
 gradlew
+gradle.properties
 
 # idea
 .idea
