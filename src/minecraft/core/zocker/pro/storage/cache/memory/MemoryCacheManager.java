@@ -35,11 +35,15 @@ public class MemoryCacheManager {
 							}
 
 							if (memoryCacheEntry.isExpiringOnQuit()) {
-								String uuid = memoryCacheEntry.getUniqueKey().substring(0, 36);
-								Player player = Bukkit.getPlayer(UUID.fromString(uuid));
-								if (player != null && player.isOnline()) return;
+								if (memoryCacheEntry.getUniqueKey().length() > 35 && memoryCacheEntry.getUniqueKey().length() < 37) { // is player uuid
+									String uuid = memoryCacheEntry.getUniqueKey().substring(0, 36);
+									Player player = Bukkit.getPlayer(UUID.fromString(uuid));
+									if (player != null && player.isOnline()) return;
 
-								memoryCacheEntryList.remove(memoryCacheEntry);
+									memoryCacheEntryList.remove(memoryCacheEntry);
+								} else {
+									memoryCacheEntryList.remove(memoryCacheEntry);
+								}
 							}
 						});
 				} catch (Exception e) {
