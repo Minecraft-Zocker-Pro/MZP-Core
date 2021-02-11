@@ -79,7 +79,7 @@ public class CompatibleMessage {
 
 	public static void sendActionBar(Player player, String message) {
 		if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_9)) {
-			player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+			player.sendActionBar(new TextComponent(message));
 			return;
 		}
 
