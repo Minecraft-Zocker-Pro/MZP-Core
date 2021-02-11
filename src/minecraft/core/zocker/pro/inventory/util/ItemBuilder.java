@@ -36,7 +36,12 @@ public class ItemBuilder {
 	public ItemBuilder(ItemStack itemStack) {
 		this.itemFactory = Bukkit.getItemFactory();
 		this.itemStack = new ItemStack(itemStack);
-		this.itemMeta = this.itemFactory.getItemMeta(this.itemStack.getType());
+
+		if (this.itemStack.getItemMeta() == null) {
+			this.itemMeta = this.itemFactory.getItemMeta(this.itemStack.getType());
+		} else {
+			this.itemMeta = this.itemStack.getItemMeta();
+		}
 	}
 
 	/**
@@ -86,6 +91,10 @@ public class ItemBuilder {
 	 * @return the item stack
 	 */
 	public ItemStack toItemStack() {
+		if(this.itemStack.getType() == CompatibleMaterial.AIR.getMaterial()) {
+			return itemStack;
+		}
+		
 		itemStack.setItemMeta(itemFactory.asMetaFor(itemMeta, itemStack));
 		return itemStack;
 	}
