@@ -1,6 +1,7 @@
 package minecraft.core.zocker.pro.config;
 
 import com.vdurmont.semver4j.Semver;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class Config {
 
@@ -148,6 +150,21 @@ public class Config {
 	public List<String> getStringList(String keyPath) {
 		if (keyPath.length() > 0) {
 			return this.configuration.getStringList(keyPath);
+		}
+		return null;
+	}
+
+	public List<String> getStringList(String keyPath, boolean formatColor) {
+		if (keyPath.length() > 0) {
+			List<String> stringList = this.configuration.getStringList(keyPath);
+
+			if(!formatColor){
+				return stringList;
+			}
+
+			return stringList.stream().map( string ->
+					ChatColor.translateAlternateColorCodes('&', string)
+			).collect(Collectors.toList());
 		}
 		return null;
 	}
