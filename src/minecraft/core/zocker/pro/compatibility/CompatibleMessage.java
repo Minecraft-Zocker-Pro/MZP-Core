@@ -54,19 +54,11 @@ public class CompatibleMessage {
 	}
 
 	public static void sendMessage(Player player, String message) {
-		if (ServerVersion.isServerVersionAtOrBelow(ServerVersion.V1_8)) {
-			player.sendMessage(message);
-		} else {
-			player.sendMessage(TextComponent.fromLegacyText(message));
-		}
+		player.sendMessage(message);
 	}
 
 	public static void sendMessage(CommandSender sender, String message) {
-		if (ServerVersion.isServerVersionAtOrBelow(ServerVersion.V1_8)) {
-			sender.sendMessage(message);
-		} else {
-			sender.sendMessage(TextComponent.fromLegacyText(message));
-		}
+		sender.sendMessage(message);
 	}
 
 	public static void sendMessage(Player player, BaseComponent[] baseComponents) {
@@ -79,7 +71,7 @@ public class CompatibleMessage {
 
 	public static void sendActionBar(Player player, String message) {
 		if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_9)) {
-			player.sendActionBar(new TextComponent(message));
+			player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(message));
 			return;
 		}
 

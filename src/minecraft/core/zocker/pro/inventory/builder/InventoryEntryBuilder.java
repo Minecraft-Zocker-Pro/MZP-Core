@@ -31,7 +31,7 @@ public class InventoryEntryBuilder {
 	 * @return the item
 	 */
 	public InventoryEntryBuilder setItem(ItemStack itemStack) {
-		this.itemStack = itemStack;
+		this.itemStack = new ItemStack(itemStack);
 		return this;
 	}
 
@@ -209,7 +209,7 @@ public class InventoryEntryBuilder {
 			windowBorderRightClickConsumers.add(consumer);
 			clickActions.put(ClickType.WINDOW_BORDER_RIGHT, windowBorderRightClickConsumers);
 		}
-		
+
 		return this;
 	}
 

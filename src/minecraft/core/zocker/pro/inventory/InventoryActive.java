@@ -116,7 +116,7 @@ public class InventoryActive {
 
 			anvil.setOnChange(() -> {
 				if (anvil.getRenameText() != null) {
-					ItemStack itemStack = new ItemStack(CompatibleMaterial.PAPER.getMaterial());
+					ItemStack itemStack = inventoryAnvilZocker.getResultInventoryEntry().getItem();
 					ItemMeta itemMeta = itemStack.getItemMeta();
 
 					// For 1.8.x players on Java 13
@@ -134,7 +134,7 @@ public class InventoryActive {
 
 			anvil.setLeftInput(inventoryAnvilZocker.getLeftInventoryEntry().getItem());
 			anvil.setRightInput(inventoryAnvilZocker.getRightInventoryEntry().getItem());
-			anvil.setOutput(new ItemStack(inventoryAnvilZocker.getResultInventoryEntry().getItem()));
+			anvil.setOutput(inventoryAnvilZocker.getResultInventoryEntry().getItem());
 
 			anvil.setRenameText(inventoryAnvilZocker.getResultInventoryEntry().getItem().getItemMeta().getDisplayName());
 
