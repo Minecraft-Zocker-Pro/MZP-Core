@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Original source from https://github.com/songoda/SongodaCore
  * Starting in Minecraft 1.13, separate materials for blocks and items were
  * phased out. This provides a translation for those values.
  */

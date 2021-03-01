@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Original source from https://github.com/songoda/SongodaCore
  * Near-Materials for older servers 1.7+
  */
 public enum LegacyMaterialAnalouge {

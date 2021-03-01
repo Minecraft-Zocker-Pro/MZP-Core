@@ -19,8 +19,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Biomes that are compatible with server versions 1.7+
+ * Original source from https://github.com/songoda/SongodaCore
+ * Biomes that are compatible with server versions1.7+
  */
+
 public enum CompatibleBiome {
 
 	/* 1.16 */

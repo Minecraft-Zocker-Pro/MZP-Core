@@ -13,9 +13,11 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Get which hand is being used.
+/***
+ * Original source from https://github.com/songoda/SongodaCore
+ *Get which hand is being used.
  */
+
 public enum CompatibleHand {
 
 	MAIN_HAND, OFF_HAND;

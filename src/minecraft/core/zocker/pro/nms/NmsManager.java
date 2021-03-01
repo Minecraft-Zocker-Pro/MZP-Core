@@ -7,6 +7,9 @@ import org.bukkit.Bukkit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/***
+ * Original source from https://github.com/songoda/SongodaCore
+ */
 public class NmsManager {
 
 	private final static String serverPackagePath = Bukkit.getServer().getClass().getPackage().getName();
