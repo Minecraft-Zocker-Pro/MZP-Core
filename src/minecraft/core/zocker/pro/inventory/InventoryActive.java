@@ -282,7 +282,6 @@ public class InventoryActive {
 			@Override
 			public void run() {
 				Player player = zocker.getPlayer();
-				player.closeInventory();
 
 				if (inventoryZocker instanceof InventoryAnvilZocker) {
 					((InventoryAnvilZocker) inventoryZocker).getAnvil().open();

@@ -92,7 +92,7 @@ public abstract class InventoryZocker {
 	public boolean isMovable() {
 		return false;
 	}
-	
+
 	/**
 	 * Sets inventory.
 	 */
@@ -131,7 +131,23 @@ public abstract class InventoryZocker {
 	 * @return the close button
 	 */
 	public InventoryEntry getCloseButton() {
-		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.BARRIER.getMaterial()).setName("§6§lClose")).onAllClicks(event -> this.close(Zocker.getZocker(event.getWhoClicked().getUniqueId()))).setAsync(false).build();
+		return new InventoryEntryBuilder().setItem(new ItemBuilder(CompatibleMaterial.BARRIER.getMaterial()).setName("§6§lClose")).onAllClicks(event -> {
+			final Zocker zocker = Zocker.getZocker(event.getWhoClicked().getUniqueId());
+
+			InventoryActive active = this.actives.get(zocker.getUUID());
+			Validator.checkNotNull(active, "Can't close the inventory for " + zocker.getPlayer().getName() + ", no active InventoryZocker found.");
+			active.stopUpdating();
+			active.deleteObject();
+
+			zocker.getPlayer().closeInventory();
+
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					active.getInventoryZocker().onClose(active.getInventoryZocker(), active.getInventory(), active.getZocker().getPlayer());
+				}
+			}.runTaskAsynchronously(Main.getPlugin());
+		}).setAsync(false).build();
 	}
 
 	public InventoryEntry getInfoSign() {
@@ -208,7 +224,6 @@ public abstract class InventoryZocker {
 		Validator.checkNotNull(active, "Can't close the inventory for " + zocker.getPlayer().getName() + ", no active InventoryZocker found.");
 		active.stopUpdating();
 		active.deleteObject();
-		zocker.getPlayer().closeInventory();
 
 		new BukkitRunnable() {
 			@Override
