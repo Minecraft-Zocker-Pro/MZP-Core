@@ -42,7 +42,9 @@ public class MemoryCacheManager {
 
 									memoryCacheEntryList.remove(memoryCacheEntry);
 								} else {
-									memoryCacheEntryList.remove(memoryCacheEntry);
+									if ((memoryCacheEntry.getExpirationDuration() - current) <= 0) {
+										memoryCacheEntryList.remove(memoryCacheEntry);
+									}
 								}
 							}
 						});
@@ -84,6 +86,10 @@ public class MemoryCacheManager {
 		}
 
 		return null;
+	}
+
+	public int getSize() {
+		return memoryCacheEntryList.size();
 	}
 
 	public void add(MemoryCacheEntry memoryCacheEntry) {

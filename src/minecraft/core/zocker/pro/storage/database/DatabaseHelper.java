@@ -101,13 +101,11 @@ public abstract class DatabaseHelper {
 				selectStatement = StorageManager.getSQLiteDatabase().getConnection().prepareStatement(selectString);
 			}
 
-
 			selectStatement.setString(1, condition);
 			return selectStatement.executeQuery();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
 
 		return null;
 	}

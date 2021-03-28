@@ -46,7 +46,7 @@ public class Main extends CorePlugin {
 		this.buildConfig();
 
 		new HookManager().load("Vault");
-		
+
 		StorageManager.initialize();
 
 		this.registerCommand();
@@ -54,7 +54,7 @@ public class Main extends CorePlugin {
 		this.handleVoidFall();
 
 		ConditionManager.loadAll();
-		
+
 		// Reinitialize
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			new Zocker(player.getUniqueId());
@@ -138,6 +138,7 @@ public class Main extends CorePlugin {
 		// Memory
 		CORE_STORAGE.set("storage.cache.memory.enabled", true, "0.0.11");
 		CORE_STORAGE.set("storage.cache.memory.delay", 1, "0.0.11");
+		CORE_STORAGE.set("storage.cache.memory.limit", 100000, "0.0.17");
 		CORE_STORAGE.set("storage.cache.memory.expiration.duration", 60, "0.0.11");
 		CORE_STORAGE.set("storage.cache.memory.expiration.renew", true, "0.0.11");
 
@@ -147,7 +148,7 @@ public class Main extends CorePlugin {
 		CORE_STORAGE.set("storage.cache.redis.port", 6379, "0.0.1");
 		CORE_STORAGE.set("storage.cache.redis.password", "!default", "0.0.1");
 
-		CORE_STORAGE.setVersion("0.0.11", true);
+		CORE_STORAGE.setVersion("0.0.17", true);
 
 		// Message
 		CORE_MESSAGE = new Config("message.yml", this.getPluginName());
@@ -164,11 +165,9 @@ public class Main extends CorePlugin {
 
 	@Override
 	public void reload() {
-		Config config = Config.getConfig("core.yml", this.getPluginName());
-		config.reload();
-
-		Config message = Config.getConfig("message.yml", this.getPluginName());
-		message.reload();
+		CORE_CONFIG.reload();
+		CORE_MESSAGE.reload();
+		CORE_STORAGE.reload();
 
 		Zocker.getAllZocker().clear();
 
@@ -185,13 +184,16 @@ public class Main extends CorePlugin {
 			zocker.getPlayer().closeInventory();
 		});
 
-		InventoryActive.getActiveGUIs().clear();
+		InventoryActive.getActiveInventorys().clear();
 
 		if (StorageManager.isMemory()) {
 			MemoryCacheManager.stop();
 			MemoryCacheManager.start();
-		} else {
+		}
+		
+		if (StorageManager.isRedis()) {
 			NetworkServerManager.stop();
+			NetworkServerManager.start();
 		}
 
 		this.handleVoidFall();

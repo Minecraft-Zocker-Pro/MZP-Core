@@ -122,30 +122,36 @@ public class Zocker {
 	public CompletableFuture<String> get(String table, String column, String uniqueKey, Object uniqueValue) {
 		if (table == null || column == null || uniqueKey == null) return null;
 
+		// Cache
+		if (StorageManager.isMemory()) {
+			MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+			MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+
+			if (cacheEntry != null) {
+				if (!cacheEntry.getColumns().isEmpty()) {
+					for (String key : cacheEntry.getColumns().keySet()) {
+						if (key.equalsIgnoreCase(column)) {
+							Object value = cacheEntry.getColumns().get(column);
+							if (value != null) return CompletableFuture.completedFuture(value.toString());
+							break;
+						}
+					}
+				}
+			}
+		}
+
 		return CompletableFuture.supplyAsync(() -> {
-			// Cache
 			if (StorageManager.isRedis()) {
 				RedisCacheManager redisCacheManager = new RedisCacheManager();
 				try (ShardedJedis redis = redisCacheManager.getResource()) {
 					String redisData = redis.hget(uniqueValue.toString() + "-" + table, column);
 
 					if (redisData != null) {
-						return redisData;
-					}
-				}
-			} else if (StorageManager.isMemory()) {
-				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+						HashMap<String, String> data = new HashMap<>();
+						data.put(column, redisData);
 
-				if (cacheEntry != null) {
-					if (!cacheEntry.getColumns().isEmpty()) {
-						for (String key : cacheEntry.getColumns().keySet()) {
-							if (key.equalsIgnoreCase(column)) {
-								Object value = cacheEntry.getColumns().get(column);
-								if (value != null) return value.toString();
-								break;
-							}
-						}
+						createMemoryCacheEntry(uniqueValue.toString() + "-" + table, data);
+						return redisData;
 					}
 				}
 			}
@@ -171,8 +177,9 @@ public class Zocker {
 						try (ShardedJedis redis = redisCacheManager.getResource()) {
 							redis.hset(uniqueValue.toString() + "-" + table, column, value);
 						}
-						return value;
-					} else if (StorageManager.isMemory()) {
+					}
+
+					if (StorageManager.isMemory()) {
 						MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
 						MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
 
@@ -207,12 +214,40 @@ public class Zocker {
 		return this.getList(table, primaryKeys, "uuid", this.uuid);
 	}
 
-	// TODO memory cache redis cache system for getList
 	public CompletableFuture<List<String>> getList(String table, String[] columns, String uniqueKey, Object uniqueValue) {
 		if (table == null || columns == null) return null;
 
+		String uniqueKeyDatabase = uniqueValue.toString() + "-list-" + table;
+
+		if (StorageManager.isMemory()) {
+			MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+			MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKeyDatabase);
+
+			if (cacheEntry != null) {
+				if (!cacheEntry.getColumns().isEmpty()) {
+					List<String> data = new ArrayList<>(cacheEntry.getColumns().keySet());
+
+					if (!data.isEmpty()) {
+						return CompletableFuture.completedFuture(data);
+					}
+				}
+			}
+		}
+
 		return CompletableFuture.supplyAsync(() -> {
 			try {
+				if (StorageManager.isRedis()) {
+					RedisCacheManager redisCacheManager = new RedisCacheManager();
+					try (ShardedJedis redis = redisCacheManager.getResource()) {
+						Map<String, String> redisData = redis.hgetAll(uniqueKeyDatabase);
+
+						if (redisData.size() > 0) {
+							createMemoryCacheEntry(uniqueKeyDatabase, redisData);
+							return new ArrayList<>(redisData.keySet());
+						}
+					}
+				}
+
 				ResultSet result;
 				if (StorageManager.isMySQL()) {
 					assert StorageManager.getMySQLDatabase() != null : "Select list command failed";
@@ -229,21 +264,47 @@ public class Zocker {
 						result = StorageManager.getSQLiteDatabase().select(table, columns);
 					}
 				}
+
 				if (result == null) return null;
 
-				List<String> data = new ArrayList<>();
+				HashMap<String, String> data = new HashMap<>();
+				List<String> returnData = new ArrayList<>();
 
 				while (result.next()) {
-					String primaryKey = result.getString(columns[1]);
-					if (primaryKey == null) continue;
+					String value = result.getString(columns[1]);
+					if (value.equalsIgnoreCase(this.getUUIDString())) continue;
 
-					data.add(primaryKey);
+					data.put(value, columns[1]);
+					returnData.add(value);
 				}
 
 				result.close();
 
-				return data;
-			} catch (SQLException e) {
+				if (data.isEmpty()) {
+					return returnData;
+				}
+
+				if (StorageManager.isRedis()) {
+					RedisCacheManager redisCacheManager = new RedisCacheManager();
+					try (ShardedJedis redis = redisCacheManager.getResource()) {
+						redis.hmset(uniqueKeyDatabase, data);
+						redis.expire(uniqueKeyDatabase, 5);
+					}
+				}
+
+				if (StorageManager.isMemory()) {
+					MemoryCacheEntryBuilder memoryCacheEntryBuilder = new MemoryCacheEntryBuilder();
+					memoryCacheEntryBuilder.setUniqueKey(uniqueKeyDatabase);
+
+					for (String value : data.keySet()) {
+						memoryCacheEntryBuilder.addColumn(value, "");
+					}
+
+					new MemoryCacheManager().add(memoryCacheEntryBuilder.build());
+				}
+
+				return returnData;
+			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
 			}
@@ -261,6 +322,30 @@ public class Zocker {
 	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String uniqueKey, Object uniqueValue) {
 		if (table == null || columns == null) return null;
 
+		if (StorageManager.isMemory()) {
+			MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+			MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+
+			if (cacheEntry != null) {
+				if (!cacheEntry.getColumns().isEmpty()) {
+
+					Map<String, String> data = new HashMap<>();
+
+					for (String column : columns) {
+						for (String key : cacheEntry.getColumns().keySet()) {
+							if (column.equalsIgnoreCase(key)) {
+								data.put(column, cacheEntry.getColumns().get(column).toString());
+							}
+						}
+					}
+
+					if (data.size() == columns.length) {
+						return CompletableFuture.completedFuture(data);
+					}
+				}
+			}
+		}
+
 		return CompletableFuture.supplyAsync(() -> {
 			if (StorageManager.isRedis()) {
 				RedisCacheManager redisCacheManager = new RedisCacheManager();
@@ -277,28 +362,7 @@ public class Zocker {
 						}
 
 						if (data.size() == columns.length) {
-							return data;
-						}
-					}
-				}
-			} else if (StorageManager.isMemory()) {
-				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
-
-				if (cacheEntry != null) {
-					if (!cacheEntry.getColumns().isEmpty()) {
-
-						Map<String, String> data = new HashMap<>();
-
-						for (String column : columns) {
-							for (String key : cacheEntry.getColumns().keySet()) {
-								if (column.equalsIgnoreCase(key)) {
-									data.put(column, cacheEntry.getColumns().get(column).toString());
-								}
-							}
-						}
-
-						if (data.size() == columns.length) {
+							createMemoryCacheEntry(uniqueKey, data);
 							return data;
 						}
 					}
@@ -327,12 +391,12 @@ public class Zocker {
 
 					if (StorageManager.isRedis()) {
 						RedisCacheManager redisCacheManager = new RedisCacheManager();
-						ShardedJedis redis = redisCacheManager.getResource();
+						try (ShardedJedis redis = redisCacheManager.getResource()) {
+							redis.hmset(uniqueValue.toString() + "-" + table, data);
+						}
+					}
 
-						redis.hmset(uniqueValue.toString() + "-" + table, data);
-
-						redis.close();
-					} else if (StorageManager.isMemory()) {
+					if (StorageManager.isMemory()) {
 						MemoryCacheEntryBuilder memoryCacheEntryBuilder = new MemoryCacheEntryBuilder();
 						memoryCacheEntryBuilder.setUniqueKey(uniqueValue.toString() + "-" + table);
 
@@ -360,15 +424,38 @@ public class Zocker {
 	public CompletableFuture<Map<String, String>> get(String table, String[] columns, String[] uniqueKeys, Object[] uniqueValues) {
 		if (table == null || columns == null || uniqueKeys.length != uniqueValues.length) return null;
 
-		return CompletableFuture.supplyAsync(() -> {
-			String uniqueKey = generateKey(table, uniqueValues);
-			try {
-				if (StorageManager.isRedis()) {
-					RedisCacheManager redisCacheManager = new RedisCacheManager();
-					ShardedJedis redis = redisCacheManager.getResource();
-					List<String> redisData = redis.hmget(uniqueKey, columns);
+		String uniqueKey = generateKey(table, uniqueValues);
 
-					redis.close();
+		if (StorageManager.isMemory()) {
+			MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+			MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+
+			if (cacheEntry != null) {
+				if (!cacheEntry.getColumns().isEmpty()) {
+
+					Map<String, String> data = new HashMap<>();
+
+					for (String column : columns) {
+						for (String key : cacheEntry.getColumns().keySet()) {
+							if (column.equalsIgnoreCase(key)) {
+								data.put(column, cacheEntry.getColumns().get(column).toString());
+							}
+						}
+					}
+
+					if (data.size() == columns.length) {
+						return CompletableFuture.completedFuture(data);
+					}
+				}
+			}
+		}
+
+		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+
+				try (ShardedJedis redis = redisCacheManager.getResource()) {
+					List<String> redisData = redis.hmget(uniqueKey, columns);
 
 					if (redisData != null) {
 						Map<String, String> data = new HashMap<>();
@@ -381,34 +468,12 @@ public class Zocker {
 						}
 
 						if (data.size() == columns.length) {
+							createMemoryCacheEntry(uniqueKey, data);
+
 							return data;
 						}
 					}
-				} else if (StorageManager.isMemory()) {
-					MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-					MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
-
-					if (cacheEntry != null) {
-						if (!cacheEntry.getColumns().isEmpty()) {
-
-							Map<String, String> data = new HashMap<>();
-
-							for (String column : columns) {
-								for (String key : cacheEntry.getColumns().keySet()) {
-									if (column.equalsIgnoreCase(key)) {
-										data.put(column, cacheEntry.getColumns().get(column).toString());
-									}
-								}
-							}
-
-							if (data.size() == columns.length) {
-								return data;
-							}
-						}
-					}
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 
 			try {
@@ -436,12 +501,12 @@ public class Zocker {
 
 					if (StorageManager.isRedis()) {
 						RedisCacheManager redisCacheManager = new RedisCacheManager();
-						ShardedJedis redis = redisCacheManager.getResource();
+						try (ShardedJedis redis = redisCacheManager.getResource()) {
+							redis.hmset(uniqueKey, data);
+						}
+					}
 
-						redis.hmset(uniqueKey, data);
-
-						redis.close();
-					} else if (StorageManager.isMemory()) {
+					if (StorageManager.isMemory()) {
 						MemoryCacheEntryBuilder memoryCacheEntryBuilder = new MemoryCacheEntryBuilder();
 						memoryCacheEntryBuilder.setUniqueKey(uniqueKey);
 						memoryCacheEntryBuilder.setExpireDuration(Main.CORE_STORAGE.getInt("storage.cache.memory.expiration.duration"), TimeUnit.SECONDS);
@@ -479,16 +544,18 @@ public class Zocker {
 		if (table == null || column == null || uniqueKey == null || uniqueValue == null || value == null) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
-			if (StorageManager.isRedis()) {
-				RedisCacheManager redisCacheManager = new RedisCacheManager();
-				try (ShardedJedis redis = redisCacheManager.getResource()) {
-					redis.hset(uniqueValue.toString() + "-" + table, column, value.toString());
-				}
-			} else if (StorageManager.isMemory()) {
+			if (StorageManager.isMemory()) {
 				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
 				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
 				if (cacheEntry != null) {
 					cacheEntry.updateColumn(column, value.toString());
+				}
+			}
+
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				try (ShardedJedis redis = redisCacheManager.getResource()) {
+					redis.hset(uniqueValue.toString() + "-" + table, column, value.toString());
 				}
 			}
 
@@ -514,6 +581,16 @@ public class Zocker {
 		if (table == null || columns.length != values.length || uniqueKey == null || uniqueValue == null) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
+			if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
+				if (cacheEntry != null) {
+					for (int i = 0; i < columns.length; i++) {
+						cacheEntry.updateColumn(columns[i], values[i].toString());
+					}
+				}
+			}
+
 			if (StorageManager.isRedis()) {
 				RedisCacheManager redisCacheManager = new RedisCacheManager();
 				Map<String, String> keyValues = new HashMap<>();
@@ -524,14 +601,6 @@ public class Zocker {
 
 				try (ShardedJedis redis = redisCacheManager.getResource()) {
 					redis.hmset(uniqueValue.toString() + "-" + table, keyValues);
-				}
-			} else if (StorageManager.isMemory()) {
-				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
-				if (cacheEntry != null) {
-					for (int i = 0; i < columns.length; i++) {
-						cacheEntry.updateColumn(columns[i], values[i].toString());
-					}
 				}
 			}
 
@@ -551,17 +620,19 @@ public class Zocker {
 		return CompletableFuture.supplyAsync(() -> {
 			String uniqueKey = generateKey(table, uniqueValues);
 
+			if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+				if (cacheEntry != null) {
+					cacheEntry.updateColumn(column, value.toString());
+				}
+			}
+
 			if (StorageManager.isRedis()) {
 				RedisCacheManager redisCacheManager = new RedisCacheManager();
 
 				try (ShardedJedis redis = redisCacheManager.getResource()) {
 					redis.hset(uniqueKey, column, value.toString());
-				}
-			} else if (StorageManager.isMemory()) {
-				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
-				if (cacheEntry != null) {
-					cacheEntry.updateColumn(column, value.toString());
 				}
 			}
 
@@ -581,6 +652,16 @@ public class Zocker {
 		return CompletableFuture.supplyAsync(() -> {
 			String uniqueKey = generateKey(table, uniqueValues);
 
+			if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+				if (cacheEntry != null) {
+					for (int i = 0; i < columns.length; i++) {
+						cacheEntry.updateColumn(columns[i], values[i].toString());
+					}
+				}
+			}
+
 			if (StorageManager.isRedis()) {
 				RedisCacheManager redisCacheManager = new RedisCacheManager();
 				Map<String, String> keyValues = new HashMap<>();
@@ -591,15 +672,6 @@ public class Zocker {
 
 				try (ShardedJedis redis = redisCacheManager.getResource()) {
 					redis.hmset(uniqueKey, keyValues);
-				}
-
-			} else if (StorageManager.isMemory()) {
-				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
-				if (cacheEntry != null) {
-					for (int i = 0; i < columns.length; i++) {
-						cacheEntry.updateColumn(columns[i], values[i].toString());
-					}
 				}
 			}
 
@@ -634,23 +706,13 @@ public class Zocker {
 	 * @return boolean
 	 */
 	public CompletableFuture<Boolean> isValue(String table, String column, String uniqueKey, Object uniqueValue) {
-		return CompletableFuture.supplyAsync(() -> {
-			CompletableFuture completableFuture = this.get(table, column, uniqueKey, uniqueValue).thenApply(boolString -> {
-				if (boolString == null) return false;
-				if (boolString.equals("1")) return true;
-				if (boolString.equals("0")) return false;
+		return CompletableFuture.supplyAsync(() -> this.get(table, column, uniqueKey, uniqueValue).thenApply(boolString -> {
+			if (boolString == null) return false;
+			if (boolString.equals("1")) return true;
+			if (boolString.equals("0")) return false;
 
-				return false;
-			});
-
-			try {
-				return (Boolean) completableFuture.get();
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
-			}
-
-			return null;
-		});
+			return false;
+		}).join());
 	}
 
 	// endregion
@@ -678,8 +740,7 @@ public class Zocker {
 	public CompletableFuture<Boolean> hasValueAsync(String table, String column, String uniqueKey, Object uniqueValue) {
 		return CompletableFuture.supplyAsync(() -> {
 			CompletableFuture completableFuture = this.get(table, column, uniqueKey, uniqueValue).thenApply(data -> {
-				if (data == null) return false;
-				return true;
+				return data != null;
 			});
 
 			try {
@@ -705,7 +766,15 @@ public class Zocker {
 		if (columns.length != values.length) return null;
 
 		return CompletableFuture.supplyAsync(() -> {
-			UUID uniqueValue = this.uuid;
+			if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(this.getUUIDString() + "-" + table);
+				if (cacheEntry != null) {
+					for (int i = 0; i < columns.length; i++) {
+						cacheEntry.updateColumn(columns[i], values[i].toString());
+					}
+				}
+			}
 
 			if (StorageManager.isRedis()) {
 				RedisCacheManager redisCacheManager = new RedisCacheManager();
@@ -717,16 +786,7 @@ public class Zocker {
 				}
 
 				try (ShardedJedis redis = redisCacheManager.getResource()) {
-					redis.hmset(uniqueValue.toString() + "-" + table, keyValues);
-				}
-
-			} else if (StorageManager.isMemory()) {
-				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueValue.toString() + "-" + table);
-				if (cacheEntry != null) {
-					for (int i = 0; i < columns.length; i++) {
-						cacheEntry.updateColumn(columns[i], values[i].toString());
-					}
+					redis.hmset(this.getUUIDString() + "-" + table, keyValues);
 				}
 			}
 
@@ -753,6 +813,16 @@ public class Zocker {
 		return CompletableFuture.supplyAsync(() -> {
 			String uniqueKey = generateKey(table, uniqueValues);
 
+			if (StorageManager.isMemory()) {
+				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
+				if (cacheEntry != null) {
+					for (int i = 0; i < columns.length; i++) {
+						cacheEntry.updateColumn(columns[i], values[i].toString());
+					}
+				}
+			}
+
 			if (StorageManager.isRedis()) {
 				RedisCacheManager redisCacheManager = new RedisCacheManager();
 				try (ShardedJedis redis = redisCacheManager.getResource()) {
@@ -763,14 +833,6 @@ public class Zocker {
 					}
 
 					redis.hmset(uniqueKey, keyValues);
-				}
-			} else if (StorageManager.isMemory()) {
-				MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
-				MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
-				if (cacheEntry != null) {
-					for (int i = 0; i < columns.length; i++) {
-						cacheEntry.updateColumn(columns[i], values[i].toString());
-					}
 				}
 			}
 
@@ -794,16 +856,18 @@ public class Zocker {
 
 		String uniqueKey = generateKey(table, primaryValues);
 
-		if (StorageManager.isRedis()) {
-			RedisCacheManager redisCacheManager = new RedisCacheManager();
-			try (ShardedJedis redis = redisCacheManager.getResource()) {
-				redis.del(uniqueKey);
-			}
-		} else if (StorageManager.isMemory()) {
+		if (StorageManager.isMemory()) {
 			MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
 			MemoryCacheEntry cacheEntry = memoryCacheManager.get(uniqueKey);
 			if (cacheEntry != null) {
 				memoryCacheManager.remove(cacheEntry);
+			}
+		}
+
+		if (StorageManager.isRedis()) {
+			RedisCacheManager redisCacheManager = new RedisCacheManager();
+			try (ShardedJedis redis = redisCacheManager.getResource()) {
+				redis.del(uniqueKey);
 			}
 		}
 
@@ -815,6 +879,32 @@ public class Zocker {
 
 			assert StorageManager.getSQLiteDatabase() != null : "Delete command failed.";
 			return StorageManager.getSQLiteDatabase().deleteConditional(table, primaryKeys, primaryValues);
+		});
+	}
+
+	public CompletableFuture<Boolean> deleteList(String table, String[] columns, String uniqueKey, Object uniqueValue) {
+		if (table == null || columns == null || uniqueKey == null || uniqueValue == null) return null;
+
+		return CompletableFuture.supplyAsync(() -> {
+			String uniqueKeyDatabase = uniqueValue.toString() + "-list-" + table;
+
+			if (StorageManager.isMemory()) {
+				final MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+				MemoryCacheEntry memoryCacheEntry = memoryCacheManager.get(uniqueKeyDatabase);
+
+				if (memoryCacheEntry != null) {
+					memoryCacheManager.remove(memoryCacheEntry);
+				}
+			}
+
+			if (StorageManager.isRedis()) {
+				RedisCacheManager redisCacheManager = new RedisCacheManager();
+				try (ShardedJedis jedis = redisCacheManager.getResource()) {
+					jedis.del(uniqueKeyDatabase);
+				}
+			}
+
+			return true;
 		});
 	}
 
@@ -947,6 +1037,22 @@ public class Zocker {
 
 		stringBuilder.append("-").append(table);
 		return stringBuilder.toString();
+	}
+
+	private void createMemoryCacheEntry(String uniqueKeyDatabase, Map<String, String> data) {
+		if (!StorageManager.isMemory()) return;
+
+		MemoryCacheManager memoryCacheManager = new MemoryCacheManager();
+
+		if (memoryCacheManager.getSize() >= Main.CORE_STORAGE.getInt("storage.cache.memory.limit")) return;
+
+		MemoryCacheEntryBuilder memoryCacheEntryBuilder = new MemoryCacheEntryBuilder();
+		memoryCacheEntryBuilder.setUniqueKey(uniqueKeyDatabase);
+		memoryCacheEntryBuilder.setExpireDuration(Main.CORE_STORAGE.getInt("storage.cache.memory.expiration.duration"), TimeUnit.SECONDS);
+
+		data.forEach(memoryCacheEntryBuilder::addColumn);
+
+		new MemoryCacheManager().add(memoryCacheEntryBuilder.build());
 	}
 
 	// region Getter and Setter

@@ -52,7 +52,9 @@ public class StorageManager {
 		if (storageConfig.getBool("storage.cache.redis.enabled")) {
 			RedisCacheManager.createConnection();
 			NetworkServerManager.start();
-		} else if (storageConfig.getBool("storage.cache.memory.enabled")) {
+		}
+
+		if (storageConfig.getBool("storage.cache.memory.enabled")) {
 			MemoryCacheManager.start();
 		}
 	}
