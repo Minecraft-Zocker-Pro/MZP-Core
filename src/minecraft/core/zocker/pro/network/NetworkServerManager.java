@@ -89,6 +89,12 @@ public class NetworkServerManager {
 
 			try {
 				Map<String, String> data = zocker.get("server", new String[]{"host", "port", "online", "slot", "motd", "last_update", "enabled"}, "server_uuid", serverUUID).get();
+				if (data.isEmpty()) return null;
+
+				String isEnabledString = data.get("enabled");
+				boolean isEnabled;
+
+				isEnabled = !isEnabledString.equalsIgnoreCase("0");
 
 				return new NetworkServer(
 					serverUUID,
@@ -97,8 +103,8 @@ public class NetworkServerManager {
 					Integer.parseInt(data.get("online")),
 					Integer.parseInt(data.get("slot")),
 					data.get("motd"),
-					new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(data.get("created_date")).getTime(),
-					Boolean.parseBoolean(data.get("enabled"))
+					new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(data.get("last_update")).getTime(),
+					isEnabled
 				);
 			} catch (InterruptedException | ExecutionException | ParseException e) {
 				e.printStackTrace();
@@ -129,6 +135,11 @@ public class NetworkServerManager {
 					Map<String, String> data = zocker.get("server", new String[]{"host", "port", "online", "slot", "motd", "last_update", "enabled"}, "server_uuid", serverUUID).get();
 					if (data.isEmpty()) continue;
 
+					String isEnabledString = data.get("enabled");
+					boolean isEnabled;
+
+					isEnabled = !isEnabledString.equalsIgnoreCase("0");
+
 					networkServers.add(new NetworkServer(
 						serverUUID,
 						data.get("host"),
@@ -136,8 +147,8 @@ public class NetworkServerManager {
 						Integer.parseInt(data.get("online")),
 						Integer.parseInt(data.get("slot")),
 						data.get("motd"),
-						new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(data.get("created_date")).getTime(),
-						Boolean.parseBoolean(data.get("enabled"))
+						new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(data.get("last_update")).getTime(),
+						isEnabled
 					));
 				}
 

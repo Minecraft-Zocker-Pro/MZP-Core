@@ -22,6 +22,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class Main extends CorePlugin {
 
+	public static boolean isProxy;
+
 	public static Config CORE_CONFIG;
 	public static Config CORE_MESSAGE;
 	public static Config CORE_STORAGE;
@@ -190,7 +192,7 @@ public class Main extends CorePlugin {
 			MemoryCacheManager.stop();
 			MemoryCacheManager.start();
 		}
-		
+
 		if (StorageManager.isRedis()) {
 			NetworkServerManager.stop();
 			NetworkServerManager.start();

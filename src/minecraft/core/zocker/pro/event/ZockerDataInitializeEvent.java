@@ -8,7 +8,7 @@ public class ZockerDataInitializeEvent extends Event {
 
 	private static final HandlerList HANDLER_LIST = new HandlerList();
 
-	private Zocker zocker;
+	private final Zocker zocker;
 
 	public ZockerDataInitializeEvent(Zocker zocker) {
 		super(true);

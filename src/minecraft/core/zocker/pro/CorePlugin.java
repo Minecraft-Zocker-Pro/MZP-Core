@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public abstract class CorePlugin extends JavaPlugin {
 
-	private static HashMap<String, CorePlugin> PLUGINS = new HashMap<>();
+	private static final HashMap<String, CorePlugin> PLUGINS = new HashMap<>();
 
 	private Material displayItem;
 	private PluginDescriptionFile pluginDescriptionFile;

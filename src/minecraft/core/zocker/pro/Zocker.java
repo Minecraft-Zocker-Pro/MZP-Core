@@ -172,6 +172,8 @@ public class Zocker {
 					String value = result.getString(column);
 					result.close();
 
+					if (value == null) return null;
+
 					if (StorageManager.isRedis()) {
 						RedisCacheManager redisCacheManager = new RedisCacheManager();
 						try (ShardedJedis redis = redisCacheManager.getResource()) {
@@ -270,11 +272,17 @@ public class Zocker {
 				HashMap<String, String> data = new HashMap<>();
 				List<String> returnData = new ArrayList<>();
 
+				int row = 0;
+
+				if (columns.length > 1) {
+					row = 1;
+				}
+				
 				while (result.next()) {
-					String value = result.getString(columns[1]);
+					String value = result.getString(columns[row]);
 					if (value.equalsIgnoreCase(this.getUUIDString())) continue;
 
-					data.put(value, columns[1]);
+					data.put(value, columns[row]);
 					returnData.add(value);
 				}
 
@@ -1070,6 +1078,10 @@ public class Zocker {
 	}
 
 	public String getUUIDString() {
+		if (uuid == null) {
+			return "00000000-0000-0000-0000-000000000000";
+		}
+
 		return uuid.toString();
 	}
 
