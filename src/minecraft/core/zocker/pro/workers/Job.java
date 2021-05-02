@@ -134,6 +134,8 @@ public class Job {
 			return scheduledFuture.isCancelled();
 		}
 
+		if (scheduledFuture == null) return true;
+		
 		return scheduledFuture.isCancelled();
 	}
 
