@@ -50,6 +50,7 @@ public abstract class DatabaseHelper {
 				}
 			}
 			selectString += " FROM `" + table + "`";
+
 			try {
 				PreparedStatement selectStatement;
 				if (StorageManager.isMySQL()) {
@@ -700,7 +701,7 @@ public abstract class DatabaseHelper {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		return -1;
 	}
 

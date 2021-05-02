@@ -253,14 +253,14 @@ public class Zocker {
 				ResultSet result;
 				if (StorageManager.isMySQL()) {
 					assert StorageManager.getMySQLDatabase() != null : "Select list command failed";
-					if (uniqueKey != null) {
+					if (uniqueKey != null && uniqueKey.length() >= 2) {
 						result = StorageManager.getMySQLDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
 					} else {
 						result = StorageManager.getMySQLDatabase().select(table, columns);
 					}
 				} else {
 					assert StorageManager.getSQLiteDatabase() != null : "Select list command failed.";
-					if (uniqueKey != null) {
+					if (uniqueKey != null && uniqueKey.length() >= 2) {
 						result = StorageManager.getSQLiteDatabase().select(table, columns, uniqueKey, uniqueValue.toString());
 					} else {
 						result = StorageManager.getSQLiteDatabase().select(table, columns);
@@ -277,7 +277,7 @@ public class Zocker {
 				if (columns.length > 1) {
 					row = 1;
 				}
-				
+
 				while (result.next()) {
 					String value = result.getString(columns[row]);
 					if (value.equalsIgnoreCase(this.getUUIDString())) continue;
@@ -507,6 +507,8 @@ public class Zocker {
 
 					result.close();
 
+					if (data.isEmpty()) return null;
+
 					if (StorageManager.isRedis()) {
 						RedisCacheManager redisCacheManager = new RedisCacheManager();
 						try (ShardedJedis redis = redisCacheManager.getResource()) {
@@ -531,7 +533,7 @@ public class Zocker {
 
 					return data;
 				}
-			} catch (SQLException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
 			}
@@ -714,51 +716,30 @@ public class Zocker {
 	 * @return boolean
 	 */
 	public CompletableFuture<Boolean> isValue(String table, String column, String uniqueKey, Object uniqueValue) {
-		return CompletableFuture.supplyAsync(() -> this.get(table, column, uniqueKey, uniqueValue).thenApply(boolString -> {
+		return this.get(table, column, uniqueKey, uniqueValue).thenApply(boolString -> {
 			if (boolString == null) return false;
 			if (boolString.equals("1")) return true;
 			if (boolString.equals("0")) return false;
 
 			return false;
-		}).join());
+		});
 	}
 
 	// endregion
 
 	// region Has
 
-	public boolean hasValue(String table, String column) {
+	public CompletableFuture<Boolean> hasValue(String table, String column) {
 		return this.hasValue(table, column, "uuid", this.uuid.toString());
 	}
 
-	public boolean hasValue(String table, String column, String uniqueKey, Object uniqueValue) {
-		CompletableFuture<String> stringCompletableFuture = this.get(table, column, uniqueKey, uniqueValue);
-		try {
-			String data = stringCompletableFuture.get();
-
-			if (data == null) return false;
-			return true;
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-		}
-
-		return false;
+	public CompletableFuture<Boolean> hasValue(String table, String column, String uniqueKey, Object uniqueValue) {
+		return this.get(table, column, uniqueKey, uniqueValue).thenApply(Objects::nonNull);
 	}
 
+	@Deprecated
 	public CompletableFuture<Boolean> hasValueAsync(String table, String column, String uniqueKey, Object uniqueValue) {
-		return CompletableFuture.supplyAsync(() -> {
-			CompletableFuture completableFuture = this.get(table, column, uniqueKey, uniqueValue).thenApply(data -> {
-				return data != null;
-			});
-
-			try {
-				return (Boolean) completableFuture.get();
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
-			}
-
-			return null;
-		});
+		return this.get(table, column, uniqueKey, uniqueValue).thenApply(Objects::nonNull);
 	}
 
 	// endregion
