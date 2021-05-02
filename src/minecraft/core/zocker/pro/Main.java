@@ -22,8 +22,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class Main extends CorePlugin {
 
-	public static boolean isProxy;
-
 	public static Config CORE_CONFIG;
 	public static Config CORE_MESSAGE;
 	public static Config CORE_STORAGE;
@@ -117,11 +115,12 @@ public class Main extends CorePlugin {
 		CORE_CONFIG = new Config("core.yml", this.getPluginName());
 
 		CORE_CONFIG.set("core.server.name", "my-server", "0.0.2");
+		CORE_CONFIG.set("core.proxy.enabled", false, "0.0.19");
 		CORE_CONFIG.set("core.event.void.enabled", false, "0.0.9");
 		CORE_CONFIG.set("core.event.void.high", 0, "0.0.9");
 		CORE_CONFIG.set("core.event.void.delay", 20, "0.0.9");
 
-		CORE_CONFIG.setVersion("0.0.9", true);
+		CORE_CONFIG.setVersion("0.0.19", true);
 
 		// Storage
 		CORE_STORAGE = new Config("storage.yml", this.getPluginName());

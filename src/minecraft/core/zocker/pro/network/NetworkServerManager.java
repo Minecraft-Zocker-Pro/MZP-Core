@@ -1,5 +1,6 @@
 package minecraft.core.zocker.pro.network;
 
+import minecraft.core.zocker.pro.Main;
 import minecraft.core.zocker.pro.Zocker;
 import minecraft.core.zocker.pro.storage.StorageManager;
 import minecraft.core.zocker.pro.storage.cache.redis.RedisCacheManager;
@@ -12,6 +13,7 @@ import minecraft.core.zocker.pro.workers.instances.WorkerPriority;
 import minecraft.core.zocker.pro.workers.instances.Workers;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.spigotmc.SpigotConfig;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -44,14 +46,14 @@ public class NetworkServerManager {
 			});
 
 			jobRunnable = new JobRunnable() {
+				final Server server = Bukkit.getServer();
+
 				@Override
 				public void run() {
-					Server server = Bukkit.getServer();
-
 					zocker.set("server",
 						new String[]{"host", "port", "online", "slot", "motd", "last_update"},
 						new Object[]{server.getIp(), server.getPort(), server.getOnlinePlayers().size(), server.getMaxPlayers(), server.getMotd(),
-							new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date(System.currentTimeMillis()))},
+							new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new java.sql.Date(System.currentTimeMillis()))},
 						new String[]{"server_uuid"},
 						new Object[]{StorageManager.getServerName()});
 				}
@@ -122,7 +124,8 @@ public class NetworkServerManager {
 				List<String> serverUUIDs = zocker.getList(
 					"server",
 					new String[]{"server_uuid"},
-					null, null)
+					"server_uuid",
+					StorageManager.getServerName())
 					.get();
 
 				if (serverUUIDs == null || serverUUIDs.isEmpty()) return null;
@@ -158,6 +161,25 @@ public class NetworkServerManager {
 			}
 
 			return null;
+		});
+	}
+
+	public CompletableFuture<Integer> getGlobalOnline() {
+		return getServers().thenApply(networkServers -> {
+			int amount = 0;
+
+			for (NetworkServer networkServer : networkServers) {
+				if (!networkServer.isEnabled()) continue;
+				if (networkServer.getName().startsWith("Proxy")) continue;
+
+				amount += networkServer.getOnline();
+			}
+
+			if (amount <= 0) {
+				amount = Bukkit.getServer().getOnlinePlayers().size();
+			}
+
+			return amount;
 		});
 	}
 
@@ -298,4 +320,8 @@ public class NetworkServerManager {
 	}
 
 	// endregion
+
+	public boolean isProxyEnabled() {
+		return SpigotConfig.bungee && Main.CORE_CONFIG.getBool("core.proxy.enabled");
+	}
 }
