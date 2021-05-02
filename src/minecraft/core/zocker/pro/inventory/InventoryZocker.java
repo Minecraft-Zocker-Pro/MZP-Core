@@ -405,4 +405,13 @@ public abstract class InventoryZocker {
 		active.initInventory(page);
 	}
 
+	public void updateContent(Zocker zocker, boolean clear) {
+		if (zocker == null) return;
+
+		InventoryActive active = this.actives.get(zocker.getUUID());
+		if (active == null) return;
+
+		active.updateContent(clear);
+	}
+
 }

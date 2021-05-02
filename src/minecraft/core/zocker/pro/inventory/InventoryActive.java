@@ -29,10 +29,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -86,22 +83,16 @@ public class InventoryActive {
 	 * @param page the page
 	 */
 	public void initInventory(InventoryPage page) {
+		final ArrayList<InventoryEntry> inventoryEntries = this.inventoryZocker.getEntries()
+			.stream()
+			.filter(Objects::nonNull)
+			.collect(Collectors.toCollection(ArrayList::new));
+
 		if (this.inventoryZocker instanceof InventoryUpdateZocker) {
 			InventoryUpdateZocker inventoryUpdateZocker = (InventoryUpdateZocker) this.inventoryZocker;
 
 			if (inventoryUpdateZocker.isClearBefore()) {
-				for (ItemStack itemStack : this.getInventory().getContents()) {
-					if (itemStack == null) continue;
-					if (itemStack.getType() == this.inventoryZocker.getBorder().getType()) continue;
-					if (itemStack == this.inventoryZocker.getCloseButton().getItem()) continue;
-					if (this.inventoryZocker.getInfoSign() != null) {
-						if (itemStack == this.inventoryZocker.getInfoSign().getItem()) continue;
-					}
-					if (itemStack.getType() == this.inventoryZocker.getPreviousArrow().getItem().getType()) continue;
-					if (itemStack.getType() == this.inventoryZocker.getNextArrow().getItem().getType()) continue;
-
-					this.getInventory().removeItem(itemStack);
-				}
+				this.clearContent(inventoryEntries);
 			}
 		}
 
@@ -147,7 +138,7 @@ public class InventoryActive {
 			inventory.setItem(blacklistedSlot, blacklistedItem);
 		}
 
-		for (InventoryEntry entry : this.inventoryZocker.getEntries().stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new))) {
+		for (InventoryEntry entry : inventoryEntries) {
 			if (entry.getSlot() != null) {
 				inventory.setItem(entry.getSlot(), entry.getItem());
 				activeEntries.put(entry.getSlot(), new GUIActiveListener.GUIActiveEntry(this, entry));
@@ -272,6 +263,53 @@ public class InventoryActive {
 
 		this.inventory.remove(blacklistedItem);
 		inventoryZocker.getPages().clear();
+	}
+
+	public void updateContent(boolean clear) {
+		final List<InventoryEntry> inventoryEntries = this.inventoryZocker.getEntries()
+			.stream()
+			.filter(Objects::nonNull)
+			.collect(Collectors.toList());
+
+		if (clear) {
+			this.clearContent(inventoryEntries);
+		}
+
+		for (InventoryEntry entry : inventoryEntries) {
+
+			if (entry.getSlot() != null) {
+				inventory.setItem(entry.getSlot(), entry.getItem());
+				activeEntries.put(entry.getSlot(), new GUIActiveListener.GUIActiveEntry(this, entry));
+			} else {
+				inventory.addItem(entry.getItem());
+				int slot = inventory.first(entry.getItem());
+				activeEntries.put(slot, new GUIActiveListener.GUIActiveEntry(this, entry));
+			}
+		}
+	}
+
+	private void clearContent(List<InventoryEntry> inventoryEntries) {
+		Inventory inventory = this.getInventory();
+		if (inventory == null) return;
+
+		for (InventoryEntry entry : inventoryEntries) {
+			ItemStack itemStack = entry.getItem();
+			if (itemStack == null) continue;
+			if (itemStack.getType() == this.inventoryZocker.getBorder().getType()) continue;
+			if (itemStack == this.inventoryZocker.getCloseButton().getItem()) continue;
+			if (this.inventoryZocker.getInfoSign() != null) {
+				if (itemStack == this.inventoryZocker.getInfoSign().getItem()) continue;
+			}
+
+			if (itemStack.getType() == this.inventoryZocker.getPreviousArrow().getItem().getType()) continue;
+			if (itemStack.getType() == this.inventoryZocker.getNextArrow().getItem().getType()) continue;
+
+			inventory.removeItem(itemStack);
+
+			if (entry.getSlot() != null) {
+				activeEntries.remove(entry.getSlot());
+			}
+		}
 	}
 
 	/**
