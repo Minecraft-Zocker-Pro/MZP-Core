@@ -83,16 +83,14 @@ public class InventoryActive {
 	 * @param page the page
 	 */
 	public void initInventory(InventoryPage page) {
-		final ArrayList<InventoryEntry> inventoryEntries = this.inventoryZocker.getEntries()
-			.stream()
-			.filter(Objects::nonNull)
-			.collect(Collectors.toCollection(ArrayList::new));
-
 		if (this.inventoryZocker instanceof InventoryUpdateZocker) {
 			InventoryUpdateZocker inventoryUpdateZocker = (InventoryUpdateZocker) this.inventoryZocker;
 
 			if (inventoryUpdateZocker.isClearBefore()) {
-				this.clearContent(inventoryEntries);
+				this.clearContent(this.inventoryZocker.getEntries()
+					.stream()
+					.filter(Objects::nonNull)
+					.collect(Collectors.toCollection(ArrayList::new)));
 			}
 		}
 
@@ -138,7 +136,7 @@ public class InventoryActive {
 			inventory.setItem(blacklistedSlot, blacklistedItem);
 		}
 
-		for (InventoryEntry entry : inventoryEntries) {
+		for (InventoryEntry entry : this.inventoryZocker.getEntries().stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new))) {
 			if (entry.getSlot() != null) {
 				inventory.setItem(entry.getSlot(), entry.getItem());
 				activeEntries.put(entry.getSlot(), new GUIActiveListener.GUIActiveEntry(this, entry));
