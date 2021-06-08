@@ -263,9 +263,9 @@ public abstract class InventoryZocker {
 			this.addItem(entry);
 			return;
 		}
-
+		
 		for (InventoryEntry inventoryEntry : entries) {
-			if (inventoryEntry.getItem() == entry.getItem()) {
+			if (inventoryEntry.getItem().isSimilar(entry.getItem())) {
 				entries.remove(inventoryEntry);
 				entries.add(entry);
 				return;

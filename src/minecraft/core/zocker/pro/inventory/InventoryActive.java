@@ -267,6 +267,11 @@ public class InventoryActive {
 		final List<InventoryEntry> inventoryEntries = this.inventoryZocker.getEntries()
 			.stream()
 			.filter(Objects::nonNull)
+			.filter(inventoryEntry -> !inventoryEntry.getItem().isSimilar(this.inventoryZocker.getBorder()))
+			.filter(inventoryEntry -> !inventoryEntry.getItem().isSimilar(this.inventoryZocker.getCloseButton().getItem()))
+			.filter(inventoryEntry -> !inventoryEntry.getItem().isSimilar(this.inventoryZocker.getPreviousArrow().getItem()))
+			.filter(inventoryEntry -> !inventoryEntry.getItem().isSimilar(this.inventoryZocker.getNextArrow().getItem()))
+			.filter(inventoryEntry -> (this.inventoryZocker.getPreviousArrow() != null && !inventoryEntry.getItem().isSimilar(this.inventoryZocker.getPreviousArrow().getItem())))
 			.collect(Collectors.toList());
 
 		if (clear) {
@@ -274,7 +279,6 @@ public class InventoryActive {
 		}
 
 		for (InventoryEntry entry : inventoryEntries) {
-
 			if (entry.getSlot() != null) {
 				inventory.setItem(entry.getSlot(), entry.getItem());
 				activeEntries.put(entry.getSlot(), new GUIActiveListener.GUIActiveEntry(this, entry));
@@ -292,15 +296,6 @@ public class InventoryActive {
 
 		for (InventoryEntry entry : inventoryEntries) {
 			ItemStack itemStack = entry.getItem();
-			if (itemStack == null) continue;
-			if (itemStack.getType() == this.inventoryZocker.getBorder().getType()) continue;
-			if (itemStack == this.inventoryZocker.getCloseButton().getItem()) continue;
-			if (this.inventoryZocker.getInfoSign() != null) {
-				if (itemStack == this.inventoryZocker.getInfoSign().getItem()) continue;
-			}
-
-			if (itemStack.getType() == this.inventoryZocker.getPreviousArrow().getItem().getType()) continue;
-			if (itemStack.getType() == this.inventoryZocker.getNextArrow().getItem().getType()) continue;
 
 			inventory.removeItem(itemStack);
 
