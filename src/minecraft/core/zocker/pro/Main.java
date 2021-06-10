@@ -19,6 +19,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
+
+import java.util.List;
 
 public class Main extends CorePlugin {
 
@@ -27,6 +30,8 @@ public class Main extends CorePlugin {
 	public static Config CORE_STORAGE;
 
 	private static CorePlugin PLUGIN;
+
+	private static BukkitTask bukkitTask;
 
 	@Override
 	public void onEnable() {
@@ -90,6 +95,10 @@ public class Main extends CorePlugin {
 		});
 
 		InventoryActive.getActiveGUIs().clear();
+
+		if (bukkitTask != null) {
+			bukkitTask.cancel();
+		}
 	}
 
 	@Override
@@ -197,7 +206,10 @@ public class Main extends CorePlugin {
 			NetworkServerManager.start();
 		}
 
-		this.handleVoidFall();
+		if (bukkitTask != null) {
+			bukkitTask.cancel();
+			this.handleVoidFall();
+		}
 	}
 
 	private void handleVoidFall() {
@@ -205,14 +217,20 @@ public class Main extends CorePlugin {
 
 		float yPosition = CORE_CONFIG.getInt("core.event.void.high");
 
-		new BukkitRunnable() {
+		List<String> whitelistWorldNameList = CORE_CONFIG.getStringList("core.event.void.whitelist");
+
+		bukkitTask = new BukkitRunnable() {
 			@Override
 			public void run() {
 				if (Bukkit.getOnlinePlayers().size() == 0) return;
 
 				Bukkit.getOnlinePlayers().forEach(player -> {
-					if (player.getLocation().getY() <= yPosition) {
-						Bukkit.getPluginManager().callEvent(new PlayerVoidFallEvent(player));
+					for (String worldName : whitelistWorldNameList) {
+						if (player.getWorld().getName().equalsIgnoreCase(worldName)) {
+							if (player.getLocation().getY() <= yPosition) {
+								Bukkit.getPluginManager().callEvent(new PlayerVoidFallEvent(player));
+							}
+						}
 					}
 				});
 			}
