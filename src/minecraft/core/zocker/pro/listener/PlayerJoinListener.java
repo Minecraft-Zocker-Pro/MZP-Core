@@ -26,7 +26,6 @@ public class PlayerJoinListener implements Listener {
 		Zocker finalZocker = zocker;
 
 		finalZocker.hasValue("player", "uuid", "uuid", finalZocker.getPlayer().getUniqueId().toString()).thenApplyAsync(aBoolean -> {
-			System.out.println("join result : " + aBoolean);
 			if (aBoolean) {
 				if (networkServerManager.isProxyEnabled()) {
 					Bukkit.getPluginManager().callEvent(new ZockerDataInitializeEvent(finalZocker));

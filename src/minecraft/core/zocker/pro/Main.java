@@ -15,6 +15,8 @@ import minecraft.core.zocker.pro.network.NetworkServerManager;
 import minecraft.core.zocker.pro.storage.StorageManager;
 import minecraft.core.zocker.pro.storage.cache.memory.MemoryCacheManager;
 import minecraft.core.zocker.pro.storage.cache.redis.RedisCacheManager;
+import minecraft.core.zocker.pro.util.invisibility.InvisibilityRespawnListener;
+import minecraft.core.zocker.pro.util.invisibility.InvisibilityTeleportListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
@@ -116,6 +118,14 @@ public class Main extends CorePlugin {
 		if (CORE_STORAGE.getBool("storage.cache.redis.enabled")) {
 			pluginManager.registerEvents(new RedisMessageListener(), this);
 		}
+
+		if (Main.CORE_CONFIG.getBool("core.invisibility.fix.respawn.enabled")) {
+			pluginManager.registerEvents(new InvisibilityRespawnListener(), this);
+		}
+
+		if (Main.CORE_CONFIG.getBool("core.invisibility.fix.teleport.enabled")) {
+			pluginManager.registerEvents(new InvisibilityTeleportListener(), this);
+		}
 	}
 
 	@Override
@@ -125,11 +135,19 @@ public class Main extends CorePlugin {
 
 		CORE_CONFIG.set("core.server.name", "my-server", "0.0.2");
 		CORE_CONFIG.set("core.proxy.enabled", false, "0.0.19");
+
+		// Event
 		CORE_CONFIG.set("core.event.void.enabled", false, "0.0.9");
 		CORE_CONFIG.set("core.event.void.high", 0, "0.0.9");
 		CORE_CONFIG.set("core.event.void.delay", 20, "0.0.9");
+		CORE_CONFIG.set("core.event.void.whitelist", new String[]{"lobby"}, "0.0.21");
 
-		CORE_CONFIG.setVersion("0.0.19", true);
+		// Invisibility
+		CORE_CONFIG.set("core.invisibility.fix.respawn.enabled", false, "0.0.21");
+		CORE_CONFIG.set("core.invisibility.fix.teleport.enabled", false, "0.0.21");
+		CORE_CONFIG.set("core.invisibility.fix.delay", 15L, "0.0.21");
+
+		CORE_CONFIG.setVersion("0.0.21", true);
 
 		// Storage
 		CORE_STORAGE = new Config("storage.yml", this.getPluginName());
