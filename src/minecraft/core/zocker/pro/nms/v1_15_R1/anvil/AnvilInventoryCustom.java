@@ -8,15 +8,15 @@ import org.bukkit.inventory.InventoryHolder;
 
 public class AnvilInventoryCustom extends CraftInventoryAnvil {
 
-    final InventoryHolder holder;
+	final InventoryHolder holder;
 
-    public AnvilInventoryCustom(InventoryHolder holder, Location location, IInventory inventory, IInventory resultInventory, ContainerAnvil container) {
-        super(location, inventory, resultInventory, container);
-        this.holder = holder;
-    }
+	public AnvilInventoryCustom(InventoryHolder holder, Location location, IInventory inventory, IInventory resultInventory, ContainerAnvil container) {
+		super(location, inventory, resultInventory, container);
+		this.holder = holder;
+	}
 
-    @Override
-    public InventoryHolder getHolder() {
-        return holder;
-    }
+	@Override
+	public InventoryHolder getHolder() {
+		return holder;
+	}
 }

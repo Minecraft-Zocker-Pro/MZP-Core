@@ -16,179 +16,198 @@ import java.util.UUID;
 
 public class NBTCompoundImpl implements NBTCompound {
 
-    protected NBTTagCompound compound;
+	protected NBTTagCompound compound;
 
-    protected NBTCompoundImpl(NBTTagCompound compound) {
-        this.compound = compound;
-    }
+	protected NBTCompoundImpl(NBTTagCompound compound) {
+		this.compound = compound;
+	}
 
-    public NBTCompoundImpl() {
-        this.compound = new NBTTagCompound();
-    }
+	public NBTCompoundImpl() {
+		this.compound = new NBTTagCompound();
+	}
 
-    @Override
-    public NBTCompound set(String tag, String s) {
-        compound.setString(tag, s);
-        return this;
-    }
+	public NBTCompoundImpl(net.minecraft.nbt.NBTTagCompound compound) {
+	}
 
-    @Override
-    public NBTCompound set(String tag, boolean b) {
-        compound.setBoolean(tag, b);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, String s) {
+		compound.setString(tag, s);
+		return this;
+	}
 
-    @Override
-    public NBTCompound set(String tag, int i) {
-        compound.setInt(tag, i);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, boolean b) {
+		compound.setBoolean(tag, b);
+		return this;
+	}
 
-    @Override
-    public NBTCompound set(String tag, double i) {
-        compound.setDouble(tag, i);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, int i) {
+		compound.setInt(tag, i);
+		return this;
+	}
 
-    @Override
-    public NBTCompound set(String tag, long l) {
-        compound.setLong(tag, l);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, double i) {
+		compound.setDouble(tag, i);
+		return this;
+	}
 
-    @Override
-    public NBTCompound set(String tag, short s) {
-        compound.setShort(tag, s);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, long l) {
+		compound.setLong(tag, l);
+		return this;
+	}
 
-    @Override
-    public NBTCompound set(String tag, byte b) {
-        compound.setByte(tag, b);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, short s) {
+		compound.setShort(tag, s);
+		return this;
+	}
 
-    @Override
-    public NBTCompound set(String tag, int[] i) {
-        compound.setIntArray(tag, i);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, byte b) {
+		compound.setByte(tag, b);
+		return this;
+	}
 
-    @Override
-    public NBTCompound set(String tag, UUID u) {
-        set(tag + "Most", u.getMostSignificantBits());
-        set(tag + "Least", u.getLeastSignificantBits());
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, int[] i) {
+		compound.setIntArray(tag, i);
+		return this;
+	}
 
-    @Override
-    public NBTCompound remove(String tag) {
-        compound.remove(tag);
-        return this;
-    }
+	@Override
+	public NBTCompound set(String tag, byte[] b) {
+		compound.setByteArray(tag, b);
+		return this;
+	}
 
-    @Override
-    public boolean has(String tag) {
-        return compound.hasKey(tag);
-    }
+	@Override
+	public NBTCompound set(String tag, UUID u) {
+		set(tag + "Most", u.getMostSignificantBits());
+		set(tag + "Least", u.getLeastSignificantBits());
+		return this;
+	}
 
-    @Override
-    public NBTObject getNBTObject(String tag) {
-        return new NBTObjectImpl(compound, tag);
-    }
+	@Override
+	public NBTCompound remove(String tag) {
+		compound.remove(tag);
+		return this;
+	}
 
-    @Override
-    public String getString(String tag) {
-        return getNBTObject(tag).asString();
-    }
+	@Override
+	public boolean has(String tag) {
+		return compound.hasKey(tag);
+	}
 
-    @Override
-    public boolean getBoolean(String tag) {
-        return getNBTObject(tag).asBoolean();
-    }
+	@Override
+	public NBTObject getNBTObject(String tag) {
+		return new NBTObjectImpl(compound, tag);
+	}
 
-    @Override
-    public int getInt(String tag) {
-        return getNBTObject(tag).asInt();
-    }
+	@Override
+	public String getString(String tag) {
+		return getNBTObject(tag).asString();
+	}
 
-    @Override
-    public double getDouble(String tag) {
-        return getNBTObject(tag).asDouble();
-    }
+	@Override
+	public boolean getBoolean(String tag) {
+		return getNBTObject(tag).asBoolean();
+	}
 
-    @Override
-    public long getLong(String tag) {
-        return getNBTObject(tag).asLong();
-    }
+	@Override
+	public int getInt(String tag) {
+		return getNBTObject(tag).asInt();
+	}
 
-    @Override
-    public short getShort(String tag) {
-        return getNBTObject(tag).asShort();
-    }
+	@Override
+	public double getDouble(String tag) {
+		return getNBTObject(tag).asDouble();
+	}
 
-    @Override
-    public byte getByte(String tag) {
-        return getNBTObject(tag).asByte();
-    }
+	@Override
+	public long getLong(String tag) {
+		return getNBTObject(tag).asLong();
+	}
 
-    @Override
-    public int[] getIntArray(String tag) {
-        return getNBTObject(tag).asIntArray();
-    }
+	@Override
+	public short getShort(String tag) {
+		return getNBTObject(tag).asShort();
+	}
 
-    @Override
-    public NBTCompound getCompound(String tag) {
-        if (has(tag)) {
-            return getNBTObject(tag).asCompound();
-        } else {
-            NBTTagCompound newCompound = new NBTTagCompound();
-            compound.set(tag, newCompound);
-            return new NBTCompoundImpl(newCompound);
-        }
-    }
+	@Override
+	public byte getByte(String tag) {
+		return getNBTObject(tag).asByte();
+	}
 
-    @Override
-    public Set<String> getKeys() {
-        return compound.c();
-    }
+	@Override
+	public int[] getIntArray(String tag) {
+		return getNBTObject(tag).asIntArray();
+	}
 
-    @Override
-    public Set<String> getKeys(String tag) {
-        return getNBTObject(tag).getKeys();
-    }
+	@Override
+	public byte[] getByteArray(String tag) {
+		return new byte[0];
+	}
 
-    @Override
-    public byte[] serialize(String... exclusions) {
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-             ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream)) {
-            addExtras();
-            NBTTagCompound compound = (NBTTagCompound) this.compound.clone(); // Changed in 1.12 // Changed in 1.9.4
+	@Override
+	public NBTCompound getCompound(String tag) {
+		if (has(tag)) {
+			return getNBTObject(tag).asCompound();
+		} else {
+			NBTTagCompound newCompound = new NBTTagCompound();
+			compound.set(tag, newCompound);
+			return new NBTCompoundImpl(newCompound);
+		}
+	}
 
-            for (String exclusion : exclusions)
-                compound.remove(exclusion);
+	@Override
+	public Set<String> getKeys() {
+		return compound.c();
+	}
 
-            NBTCompressedStreamTools.a(compound, (OutputStream) dataOutput);
+	@Override
+	public Set<String> getKeys(String tag) {
+		return getNBTObject(tag).getKeys();
+	}
 
-            return outputStream.toByteArray();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+	@Override
+	public byte[] serialize(String... exclusions) {
+		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+				 ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream)) {
+			addExtras();
+			NBTTagCompound compound = (NBTTagCompound) this.compound.clone(); // Changed in 1.12 // Changed in 1.9.4
 
-    @Override
-    public void deSerialize(byte[] serialized) {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(serialized);
-             ObjectInputStream dataInput = new ObjectInputStream(inputStream)) {
-            compound = NBTCompressedStreamTools.a((InputStream) dataInput);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+			for (String exclusion : exclusions)
+				compound.remove(exclusion);
 
-    @Override
-    public void addExtras() {
-        // None
-    }
+			NBTCompressedStreamTools.a(compound, (OutputStream) dataOutput);
+
+			return outputStream.toByteArray();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Override
+	public void deSerialize(byte[] serialized) {
+		try (ByteArrayInputStream inputStream = new ByteArrayInputStream(serialized);
+				 ObjectInputStream dataInput = new ObjectInputStream(inputStream)) {
+			compound = NBTCompressedStreamTools.a((InputStream) dataInput);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void addExtras() {
+		// None
+	}
+
+	@Override
+	public String toString() {
+		return compound.toString();
+	}
 }

@@ -75,6 +75,12 @@ public class NBTCompoundImpl implements NBTCompound {
 	}
 
 	@Override
+	public NBTCompound set(String tag, byte[] b) {
+		compound.setByteArray(tag, b);
+		return this;
+	}
+
+	@Override
 	public NBTCompound set(String tag, UUID u) {
 		compound.a(tag, u);
 		return this;
@@ -137,6 +143,11 @@ public class NBTCompoundImpl implements NBTCompound {
 	}
 
 	@Override
+	public byte[] getByteArray(String tag) {
+		return new byte[0];
+	}
+
+	@Override
 	public NBTCompound getCompound(String tag) {
 		if (has(tag)) {
 			return getNBTObject(tag).asCompound();
@@ -160,7 +171,7 @@ public class NBTCompoundImpl implements NBTCompound {
 	@Override
 	public byte[] serialize(String... exclusions) {
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			 ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream)) {
+				 ObjectOutputStream dataOutput = new ObjectOutputStream(outputStream)) {
 			addExtras();
 			NBTTagCompound compound = this.compound.clone();
 
@@ -179,7 +190,7 @@ public class NBTCompoundImpl implements NBTCompound {
 	@Override
 	public void deSerialize(byte[] serialized) {
 		try (ByteArrayInputStream inputStream = new ByteArrayInputStream(serialized);
-			 ObjectInputStream dataInput = new ObjectInputStream(inputStream)) {
+				 ObjectInputStream dataInput = new ObjectInputStream(inputStream)) {
 			compound = NBTCompressedStreamTools.a((InputStream) dataInput);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -189,5 +200,10 @@ public class NBTCompoundImpl implements NBTCompound {
 	@Override
 	public void addExtras() {
 		// None
+	}
+
+	@Override
+	public String toString() {
+		return compound.toString();
 	}
 }

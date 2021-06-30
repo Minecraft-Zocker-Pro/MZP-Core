@@ -1,5 +1,6 @@
 package minecraft.core.zocker.pro.nms.v1_15_R1.nbt;
 
+import minecraft.core.zocker.pro.nms.api.nbt.NBTCompound;
 import minecraft.core.zocker.pro.nms.api.nbt.NBTEntity;
 import net.minecraft.server.v1_15_R1.BlockPosition;
 import net.minecraft.server.v1_15_R1.Entity;
@@ -14,50 +15,61 @@ import java.util.Optional;
 
 public class NBTEntityImpl extends NBTCompoundImpl implements NBTEntity {
 
-    private Entity nmsEntity;
+	private Entity nmsEntity;
 
-    public NBTEntityImpl(NBTTagCompound entityNBT, Entity nmsEntity) {
-        super(entityNBT);
-        this.nmsEntity = nmsEntity;
-    }
+	public NBTEntityImpl(NBTTagCompound entityNBT, Entity nmsEntity) {
+		super(entityNBT);
+		this.nmsEntity = nmsEntity;
+	}
 
-    @Override
-    public org.bukkit.entity.Entity spawn(Location location) {
-        String entityType = getNBTObject("entity_type").asString();
+	@Override
+	public org.bukkit.entity.Entity spawn(Location location) {
+		String entityType = getNBTObject("entity_type").asString();
 
-        Optional<EntityTypes<?>> optionalEntity = EntityTypes.a(entityType);
-        if (optionalEntity.isPresent()) {
-            Entity spawned = optionalEntity.get().spawnCreature(
-                    ((CraftWorld) location.getWorld()).getHandle(),
-                    compound,
-                    null,
-                    null,
-                    new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
-                    EnumMobSpawn.COMMAND,
-                    true,
-                    false
-            );
+		Optional<EntityTypes<?>> optionalEntity = EntityTypes.a(entityType);
+		if (optionalEntity.isPresent()) {
+			Entity spawned = optionalEntity.get().spawnCreature(
+				((CraftWorld) location.getWorld()).getHandle(),
+				compound,
+				null,
+				null,
+				new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
+				EnumMobSpawn.COMMAND,
+				true,
+				false
+			);
 
-            if (spawned != null) {
-                spawned.f(compound); // This changed from 1.16.1
-                org.bukkit.entity.Entity entity = spawned.getBukkitEntity();
-                spawned.setLocation(location.getX(), location.getY(), location.getZ(),
-                        location.getPitch(), location.getYaw());
-                nmsEntity = spawned;
-                return entity;
-            }
-        }
-        return null;
-    }
+			if (spawned != null) {
+				spawned.f(compound); // This changed from 1.16.1
+				org.bukkit.entity.Entity entity = spawned.getBukkitEntity();
+				spawned.setLocation(location.getX(), location.getY(), location.getZ(),
+					location.getPitch(), location.getYaw());
+				nmsEntity = spawned;
+				return entity;
+			}
+		}
+		return null;
+	}
 
-    @Override
-    public org.bukkit.entity.Entity reSpawn(Location location) {
-        nmsEntity.dead = true;
-        return spawn(location);
-    }
+	@Override
+	public org.bukkit.entity.Entity reSpawn(Location location) {
+		nmsEntity.dead = true;
+		return spawn(location);
+	}
 
-    @Override
-    public void addExtras() {
-        compound.setString("entity_type", IRegistry.ENTITY_TYPE.getKey(nmsEntity.getEntityType()).toString());
-    }
+	@Override
+	public NBTCompound set(String tag, byte[] b) {
+		compound.setByteArray(tag, b);
+		return this;
+	}
+
+	@Override
+	public byte[] getByteArray(String tag) {
+		return new byte[0];
+	}
+
+	@Override
+	public void addExtras() {
+		compound.setString("entity_type", IRegistry.ENTITY_TYPE.getKey(nmsEntity.getEntityType()).toString());
+	}
 }

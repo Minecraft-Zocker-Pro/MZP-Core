@@ -1,7 +1,12 @@
 package minecraft.core.zocker.pro.nms.v1_13_R2.nbt;
 
 import minecraft.core.zocker.pro.nms.api.nbt.NBTEntity;
-import net.minecraft.server.v1_13_R2.*;
+import net.minecraft.server.v1_13_R2.BlockPosition;
+import net.minecraft.server.v1_13_R2.Entity;
+import net.minecraft.server.v1_13_R2.EntityTypes;
+import net.minecraft.server.v1_13_R2.IRegistry;
+import net.minecraft.server.v1_13_R2.MinecraftKey;
+import net.minecraft.server.v1_13_R2.NBTTagCompound;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -29,7 +34,7 @@ public class NBTEntityImpl extends NBTCompoundImpl implements NBTEntity {
 				null,
 				null,
 				new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
-				//EnumMobSpawn.COMMAND, // Changed since 1.14
+				//EnumMobSpawn.COMMAND, // Changed since 1.13.2
 				true,
 				false,
 				CreatureSpawnEvent.SpawnReason.DEFAULT

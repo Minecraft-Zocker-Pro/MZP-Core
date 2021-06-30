@@ -4,23 +4,25 @@ import java.util.Set;
 
 public interface NBTObject {
 
-    String asString();
+	String asString();
 
-    boolean asBoolean();
+	boolean asBoolean();
 
-    int asInt();
+	int asInt();
 
-    double asDouble();
+	double asDouble();
 
-    long asLong();
+	long asLong();
 
-    short asShort();
+	short asShort();
 
-    byte asByte();
+	byte asByte();
 
-    int[] asIntArray();
+	int[] asIntArray();
 
-    Set<String> getKeys();
+	byte[] asByteArray();
 
-    NBTCompound asCompound();
+	Set<String> getKeys();
+
+	NBTCompound asCompound();
 }

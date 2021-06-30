@@ -10,7 +10,7 @@ public class PlayerVoidFallEvent extends Event implements Cancellable {
 	private static final HandlerList HANDLER_LIST = new HandlerList();
 
 	private boolean isCancelled;
-	private Player player;
+	private final Player player;
 
 	public PlayerVoidFallEvent(Player player) {
 		super(true);

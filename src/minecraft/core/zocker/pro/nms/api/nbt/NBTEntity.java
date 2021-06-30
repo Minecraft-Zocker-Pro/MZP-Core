@@ -5,8 +5,8 @@ import org.bukkit.entity.Entity;
 
 public interface NBTEntity extends NBTCompound {
 
-    Entity spawn(Location location);
+	Entity spawn(Location location);
 
-    Entity reSpawn(Location location);
+	Entity reSpawn(Location location);
 
 }

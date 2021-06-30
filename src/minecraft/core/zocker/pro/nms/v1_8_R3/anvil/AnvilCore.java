@@ -7,14 +7,14 @@ import org.bukkit.inventory.InventoryHolder;
 
 public class AnvilCore implements minecraft.core.zocker.pro.nms.api.anvil.AnvilCore {
 
-	@Override
-	public CustomAnvil createAnvil(Player player) {
-		return new AnvilView(((CraftPlayer) player).getHandle(), null);
-	}
+    @Override
+    public CustomAnvil createAnvil(Player player) {
+        return new AnvilView(((CraftPlayer) player).getHandle(), null);
+    }
 
-	@Override
-	public CustomAnvil createAnvil(Player player, InventoryHolder holder) {
-		return new AnvilView(((CraftPlayer) player).getHandle(), holder);
-	}
+    @Override
+    public CustomAnvil createAnvil(Player player, InventoryHolder holder) {
+        return new AnvilView(((CraftPlayer) player).getHandle(), holder);
+    }
 
 }

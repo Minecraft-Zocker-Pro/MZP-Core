@@ -6,6 +6,9 @@ import org.bukkit.inventory.ItemStack;
 
 /**
  * NMS interface for creating an anvil view for a single player
+ *
+ * @author jascotty2
+ * @since 2019-09-13
  */
 public interface CustomAnvil {
 

@@ -5,56 +5,60 @@ import java.util.UUID;
 
 public interface NBTCompound {
 
-    NBTCompound set(String tag, String s);
+	NBTCompound set(String tag, String s);
 
-    NBTCompound set(String tag, boolean b);
+	NBTCompound set(String tag, boolean b);
 
-    NBTCompound set(String tag, int i);
+	NBTCompound set(String tag, int i);
 
-    NBTCompound set(String tag, double i);
+	NBTCompound set(String tag, double i);
 
-    NBTCompound set(String tag, long l);
+	NBTCompound set(String tag, long l);
 
-    NBTCompound set(String tag, short s);
+	NBTCompound set(String tag, short s);
 
-    NBTCompound set(String tag, byte b);
+	NBTCompound set(String tag, byte b);
 
-    NBTCompound set(String tag, int[] i);
+	NBTCompound set(String tag, int[] i);
 
-    NBTCompound set(String tag, UUID u);
+	NBTCompound set(String tag, byte[] b);
 
-    NBTCompound remove(String tag);
+	NBTCompound set(String tag, UUID u);
 
-    boolean has(String tag);
+	NBTCompound remove(String tag);
 
-    NBTObject getNBTObject(String tag);
+	boolean has(String tag);
 
-    String getString(String tag);
+	NBTObject getNBTObject(String tag);
 
-    boolean getBoolean(String tag);
+	String getString(String tag);
 
-    int getInt(String tag);
+	boolean getBoolean(String tag);
 
-    double getDouble(String tag);
+	int getInt(String tag);
 
-    long getLong(String tag);
+	double getDouble(String tag);
 
-    short getShort(String tag);
+	long getLong(String tag);
 
-    byte getByte(String tag);
+	short getShort(String tag);
 
-    int[] getIntArray(String tag);
+	byte getByte(String tag);
 
-    NBTCompound getCompound(String tag);
+	int[] getIntArray(String tag);
 
-    Set<String> getKeys();
+	byte[] getByteArray(String tag);
 
-    Set<String> getKeys(String tag);
+	NBTCompound getCompound(String tag);
 
-    byte[] serialize(String... exclusions);
+	Set<String> getKeys();
 
-    void deSerialize(byte[] serialized);
+	Set<String> getKeys(String tag);
 
-    void addExtras();
+	byte[] serialize(String... exclusions);
+
+	void deSerialize(byte[] serialized);
+
+	void addExtras();
 
 }

@@ -57,9 +57,9 @@ public class AnvilView extends ContainerAnvil implements CustomAnvil {
 			mc_Container_windowId.setAccessible(true);
 
 			// remove the final modifier
-//			Field modifiersField = Field.class.getDeclaredField("modifiers");
-//			modifiersField.setAccessible(true);
-//			modifiersField.setInt(mc_Container_windowId, mc_Container_windowId.getModifiers() & ~Modifier.FINAL);
+			Field modifiersField = Field.class.getDeclaredField("modifiers");
+			modifiersField.setAccessible(true);
+			modifiersField.setInt(mc_Container_windowId, mc_Container_windowId.getModifiers() & ~Modifier.FINAL);
 		} catch (Exception ex) {
 			Logger.getLogger(AnvilView.class.getName()).log(Level.SEVERE, "Anvil Setup Error", ex);
 		}

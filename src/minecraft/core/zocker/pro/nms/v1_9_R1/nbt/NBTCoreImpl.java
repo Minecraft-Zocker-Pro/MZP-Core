@@ -11,27 +11,27 @@ import org.bukkit.inventory.ItemStack;
 
 public class NBTCoreImpl implements NBTCore {
 
-    @Override
-    public NBTItem of(ItemStack item) {
-        return new NBTItemImpl(CraftItemStack.asNMSCopy(item));
-    }
+	@Override
+	public NBTItem of(ItemStack item) {
+		return new NBTItemImpl(CraftItemStack.asNMSCopy(item));
+	}
 
-    @Override
-    public NBTItem newItem() {
-        return new NBTItemImpl(null);
-    }
+	@Override
+	public NBTItem newItem() {
+		return new NBTItemImpl(null);
+	}
 
-    @Override
-    public NBTEntity of(Entity entity) {
-        net.minecraft.server.v1_9_R1.Entity nmsEntity = ((CraftEntity) entity).getHandle();
-        NBTTagCompound nbt = new NBTTagCompound();
-        nmsEntity.e(nbt); // Method name changed in 1.11
-        return new NBTEntityImpl(nbt, nmsEntity);
-    }
+	@Override
+	public NBTEntity of(Entity entity) {
+		net.minecraft.server.v1_9_R1.Entity nmsEntity = ((CraftEntity) entity).getHandle();
+		NBTTagCompound nbt = new NBTTagCompound();
+		nmsEntity.e(nbt); // Method name changed in 1.11
+		return new NBTEntityImpl(nbt, nmsEntity);
+	}
 
-    @Override
-    public NBTEntity newEntity() {
-        return new NBTEntityImpl(new NBTTagCompound(), null);
-    }
+	@Override
+	public NBTEntity newEntity() {
+		return new NBTEntityImpl(new NBTTagCompound(), null);
+	}
 
 }

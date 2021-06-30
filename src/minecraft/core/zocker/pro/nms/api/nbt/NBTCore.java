@@ -5,12 +5,12 @@ import org.bukkit.inventory.ItemStack;
 
 public interface NBTCore {
 
-    NBTItem of(ItemStack item);
+	NBTItem of(ItemStack item);
 
-    NBTItem newItem();
+	NBTItem newItem();
 
-    NBTEntity of(Entity entity);
+	NBTEntity of(Entity entity);
 
-    NBTEntity newEntity();
+	NBTEntity newEntity();
 
 }

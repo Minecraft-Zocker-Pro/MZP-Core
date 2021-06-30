@@ -44,13 +44,16 @@ public abstract class DatabaseHelper {
 			String selectString = "SELECT";
 			int i = 1;
 			for (String key : columns) {
-				selectString += " " + key;
+				selectString += " `" + key + "`";
 				if (!key.equals(columns[columns.length - 1])) {
 					selectString += ",";
 				}
 			}
+			
 			selectString += " FROM `" + table + "`";
 
+			System.out.println("select query : " + selectString);
+			
 			try {
 				PreparedStatement selectStatement;
 				if (StorageManager.isMySQL()) {
@@ -83,7 +86,7 @@ public abstract class DatabaseHelper {
 
 		try {
 			PreparedStatement selectStatement;
-			String selectString = "SELECT " + column + " FROM `" + table + "` WHERE " + where + " = ?";
+			String selectString = "SELECT `" + column + "` FROM `" + table + "` WHERE " + where + " = ?";
 
 			if (StorageManager.isMySQL()) {
 				if (StorageManager.getMySQLDatabase() == null) {
@@ -117,7 +120,7 @@ public abstract class DatabaseHelper {
 			String selectString = "SELECT";
 			int i = 1;
 			for (String key : columns) {
-				selectString += " " + key;
+				selectString += " `" + key + "`";
 				if (!key.equals(columns[columns.length - 1])) {
 					selectString += ",";
 				}
@@ -156,8 +159,8 @@ public abstract class DatabaseHelper {
 
 		StringBuilder selectString = new StringBuilder("SELECT");
 
-		selectString.append(" ").append(column);
-		selectString.append(" FROM `").append(table).append("` WHERE ");
+		selectString.append(" `").append(column);
+		selectString.append("` FROM `").append(table).append("` WHERE ");
 
 		for (String primaryKey : uniqueKeys) {
 			selectString.append(primaryKey).append(" = ?");
@@ -200,7 +203,7 @@ public abstract class DatabaseHelper {
 		StringBuilder selectString = new StringBuilder("SELECT");
 
 		for (String column : columns) {
-			selectString.append(" ").append(column);
+			selectString.append(" `").append(column).append("`");
 			if (!column.equals(columns[columns.length - 1])) {
 				selectString.append(",");
 			}
@@ -255,7 +258,7 @@ public abstract class DatabaseHelper {
 			try {
 				//add "?" for all columns to command
 				for (String key : columns) {
-					updateString += " " + key + " = ?";
+					updateString += " `" + key + "` = ?";
 					if (!key.equals(columns[columns.length - 1])) {
 						updateString += ",";
 					}
@@ -309,7 +312,7 @@ public abstract class DatabaseHelper {
 		if ((table != null) && (column != null) && (value != null) && (where != null) && (condition != null)) {
 			int i = 1;
 			String updateString = "UPDATE `" + table + "` SET";
-			updateString += " " + column + " = ? WHERE " + where + " = ?";
+			updateString += " `" + column + "` = ? WHERE " + where + " = ?";
 			try {
 				PreparedStatement updateStatement;
 				if (StorageManager.isMySQL()) {
@@ -349,7 +352,7 @@ public abstract class DatabaseHelper {
 		if (((table != null)) && (column != null) && (value != null) && (whereKeys != null) && (whereValues != null)) {
 			int i = 0;
 			String updateString = "UPDATE `" + table + "` SET";
-			updateString += " " + column + " = ? WHERE ";
+			updateString += " `" + column + "` = ? WHERE ";
 
 			for (String whereKey : whereKeys) {
 				updateString += whereKey;
@@ -403,7 +406,7 @@ public abstract class DatabaseHelper {
 		if ((table != null) && (columns.length > 0) && (columns.length == values.length) && (whereKeys != null) && (whereValues != null)) {
 			StringBuilder updateString = new StringBuilder("UPDATE `" + table + "` SET");
 			for (String key : columns) {
-				updateString.append(" ").append(key).append(" = ?");
+				updateString.append(" `").append(key).append("` = ?");
 				if (!key.equals(columns[columns.length - 1])) {
 					updateString.append(",");
 				}

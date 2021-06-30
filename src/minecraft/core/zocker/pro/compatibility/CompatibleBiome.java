@@ -25,6 +25,10 @@ import java.util.Set;
 
 public enum CompatibleBiome {
 
+	/* 1.17 */
+	DRIPSTONE_CAVES(ServerVersion.V1_17),
+	LUSH_CAVES(ServerVersion.V1_17),
+
 	/* 1.16 */
 	SOUL_SAND_VALLEY(ServerVersion.V1_16),
 	CRIMSON_FOREST(ServerVersion.V1_16),
