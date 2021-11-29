@@ -2633,6 +2633,34 @@ public enum CompatibleMaterial {
 	}
 
 	/**
+	 * @return true if this material is a valid brewing stand ingredient
+	 */
+	public boolean isBrewingStandIngredient() {
+		switch (this) {
+			case NETHER_WART:
+			case REDSTONE:
+			case GLOWSTONE_DUST:
+			case FERMENTED_SPIDER_EYE:
+			case GUNPOWDER:
+			case DRAGON_BREATH:
+			case SUGAR:
+			case RABBIT_FOOT:
+			case GLISTERING_MELON_SLICE:
+			case SPIDER_EYE:
+			case PUFFERFISH:
+			case MAGMA_CREAM:
+			case GOLDEN_CARROT:
+			case BLAZE_POWDER:
+			case GHAST_TEAR:
+			case TURTLE_HELMET:
+			case PHANTOM_MEMBRANE:
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * @return true if this material is a food that can be cooked and is in its cooked state
 	 */
 	public boolean isCooked() {
