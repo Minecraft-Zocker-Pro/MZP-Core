@@ -190,6 +190,7 @@ public enum CompatibleMaterial {
 	BLACKSTONE(),
 	BLACKSTONE_STAIRS(),
 	BLACKSTONE_WALL(),
+	BLACKSTONE_SLAB(),
 	BLASTSTONE_SLAB(),
 	CHAIN(),
 	CHISELED_NETHER_BRICKS(),
@@ -675,7 +676,7 @@ public enum CompatibleMaterial {
 	GRANITE_WALL,
 	GRASS("LONG_GRASS", (byte) 1),
 	GRASS_BLOCK("GRASS"),
-	GRASS_PATH("GRASS_PATH"),
+	DIRT_PATH("GRASS_PATH"),
 	GRAVEL,
 	GRAY_BANNER("BANNER", (byte) 8),
 	GRAY_BED("BED", (byte) 7),
@@ -2009,9 +2010,11 @@ public enum CompatibleMaterial {
 				return COOKED_RABBIT;
 			case KELP:
 				return DRIED_KELP;
+			case RAW_IRON:
 			case IRON_ORE:
 			case DEEPSLATE_IRON_ORE:
 				return IRON_INGOT;
+			case RAW_GOLD:
 			case GOLD_ORE:
 			case DEEPSLATE_GOLD_ORE:
 				return GOLD_INGOT;
@@ -2032,6 +2035,7 @@ public enum CompatibleMaterial {
 				return EMERALD;
 			case NETHER_QUARTZ_ORE:
 				return QUARTZ;
+			case RAW_COPPER:
 			case COPPER_ORE:
 			case DEEPSLATE_COPPER_ORE:
 				return COPPER_INGOT;
