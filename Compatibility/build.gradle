@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+//java {
+//    toolchain.languageVersion.set(JavaLanguageVersion.of(1.8))
+//}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+compileJava.options.encoding = 'UTF-8'
+
+group 'minecraft.core'
+version '0.0.21'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Version\\craftbukkit-1.18-R0.1-SNAPSHOT.jar')
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Version\\PaperSpigot-1.18.jar')
+
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Version\\PaperSpigot-1.17.jar')
+}

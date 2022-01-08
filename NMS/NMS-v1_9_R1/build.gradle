@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+//java {
+//    toolchain.languageVersion.set(JavaLanguageVersion.of(1.8))
+//}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+compileJava.options.encoding = 'UTF-8'
+
+group 'minecraft.core'
+version '0.0.21'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':NMS:NMS-API')
+    implementation project(':Compatibility')
+
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Version\\Spigot-1.9.jar')
+}

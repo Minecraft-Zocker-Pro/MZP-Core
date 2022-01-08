@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+}
+
+//java {
+//    toolchain.languageVersion.set(JavaLanguageVersion.of(1.8))
+//}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+compileJava.options.encoding = 'UTF-8'
+
+group 'minecraft.core'
+version '0.0.21'
+
+configurations {
+    provided
+    compile.extendsFrom provided
+}
+
+dependencies {
+    implementation project(':Compatibility')
+    implementation project(':NMS:NMS-API')
+
+    implementation project(':NMS:NMS-v1_8_R1')
+    implementation project(':NMS:NMS-v1_8_R2')
+    implementation project(':NMS:NMS-v1_8_R3')
+    implementation project(':NMS:NMS-v1_9_R1')
+    implementation project(':NMS:NMS-v1_9_R2')
+    implementation project(':NMS:NMS-v1_10_R1')
+    implementation project(':NMS:NMS-v1_11_R1')
+    implementation project(':NMS:NMS-v1_12_R1')
+    implementation project(':NMS:NMS-v1_13_R1')
+    implementation project(':NMS:NMS-v1_13_R2')
+    implementation project(':NMS:NMS-v1_14_R1')
+    implementation project(':NMS:NMS-v1_15_R1')
+    implementation project(':NMS:NMS-v1_16_R1')
+    implementation project(':NMS:NMS-v1_16_R2')
+    implementation project(':NMS:NMS-v1_16_R3')
+    implementation project(':NMS:NMS-v1_17_R1')
+    implementation project(':NMS:NMS-v1_18_R1')
+
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Version\\craftbukkit-1.18-R0.1-SNAPSHOT.jar')
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Version\\PaperSpigot-1.18.jar')
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Version\\PaperSpigot-1.13.2.jar')
+    
+    compileOnly files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\Vault.jar')
+
+    // Jedis
+    implementation files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\commons-pool2-2.9.0.jar')
+    provided files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\commons-pool2-2.9.0.jar')
+
+    implementation files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\jedis-3.2.0.jar')
+    provided files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\jedis-3.2.0.jar')
+
+    implementation files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\semver4j.jar')
+    provided files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\semver4j.jar')
+
+    implementation files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\org.json.jar')
+    provided files('D:\\Cloud\\Privat\\Projekte\\zocker.pro\\Minecraft\\Entwicklung\\Library\\org.json.jar')
+}
