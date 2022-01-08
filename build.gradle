@@ -1,0 +1,162 @@
+plugins {
+    id 'maven-publish'
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id 'kr.entree.spigradle' version '2.2.4'
+    id 'java'
+}
+
+//java {
+//    toolchain.languageVersion.set(JavaLanguageVersion.of(1.8))
+//}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+compileJava.options.encoding = 'UTF-8'
+
+group 'minecraft.core'
+version '0.0.22'
+
+configurations {
+    provided
+    compile.extendsFrom provided
+}
+
+dependencies {
+    implementation project(':Compatibility')
+    implementation project(':Core')
+
+    implementation project(':NMS:NMS-API')
+    implementation project(':NMS:NMS-v1_8_R1')
+    implementation project(':NMS:NMS-v1_8_R2')
+    implementation project(':NMS:NMS-v1_8_R3')
+    implementation project(':NMS:NMS-v1_9_R1')
+    implementation project(':NMS:NMS-v1_9_R2')
+    implementation project(':NMS:NMS-v1_10_R1')
+    implementation project(':NMS:NMS-v1_11_R1')
+    implementation project(':NMS:NMS-v1_12_R1')
+    implementation project(':NMS:NMS-v1_13_R1')
+    implementation project(':NMS:NMS-v1_13_R2')
+    implementation project(':NMS:NMS-v1_14_R1')
+    implementation project(':NMS:NMS-v1_15_R1')
+    implementation project(':NMS:NMS-v1_16_R1')
+    implementation project(':NMS:NMS-v1_16_R2')
+    implementation project(':NMS:NMS-v1_16_R3')
+    implementation project(':NMS:NMS-v1_17_R1')
+    implementation project(':NMS:NMS-v1_18_R1')
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    archiveBaseName.set(project.name)
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/'
+        }
+
+        resources {
+            srcDirs "src/"
+        }
+    }
+}
+
+task copyJar {
+    copy {
+        from jar
+        into project.test1
+    }
+
+    copy {
+        from jar
+        into project.test2
+    }
+
+    copy {
+        from jar
+        into project.test3
+    }
+
+    copy {
+        from jar
+        into project.test4
+    }
+}
+
+build.dependsOn copyJar
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = project.group
+            artifactId = project.name
+            version = project.version
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            url "https://maven.pkg.jetbrains.space/now-hosting/p/mzp-plugin/mzp-core"
+            credentials {
+                username = project.username
+                password = project.password
+            }
+        }
+        maven {
+            url = uri("https://papermc.io/repo/repository/maven-public/")
+        }
+        maven {
+            url = uri("https://papermc.io/repo/repository/maven-public/")
+        }
+        maven {
+            url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+
+            // As of Gradle 5.1, you can limit this to only those
+            // dependencies you expect from it
+            content {
+                includeGroup 'org.bukkit'
+                includeGroup 'org.spigotmc'
+            }
+        }
+
+        maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
+        maven { url = 'https://oss.sonatype.org/content/repositories/central' }
+
+//        mavenCentral()
+        mavenLocal()
+    }
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    exclude "generated/**"
+
+//     Add dependency to the JAR file
+//    from {
+//        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+//    }
+
+//     JAR name
+    archiveFileName = project.name + "-" + project.version + ".jar"
+}
+
+// Spigot plugin.yml
+spigot {
+    main = 'minecraft.core.zocker.pro.Main'
+    website = 'https://minecraft.plugin.zocker.pro/'
+    apiVersion = '1.13'
+    authors = ['ludgart']
+
+    softDepends = ['Vault']
+//    libraries = []
+
+    commands {
+        core {
+            aliases = ['cores']
+        }
+    }
+}
